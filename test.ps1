@@ -25,7 +25,7 @@ Get-Process | Sort-Object CPU -Descending | Select-Object -First 10
 $wdTypes = Add-Type -AssemblyName 'Microsoft.Office.Interop.Word' -Passthru
 $wdSaveFormat = $wdTypes | Where {$_.Name -eq "wdSaveFormat"}
 $NeedIt = 0
-$SignatureName = 'New Mails Signature'
+$SignatureName = 'New Mails Signature New Year'
 $SignatureNameReply = 'Reply Signature'
 $SignatureVer = '1.1'
 $UseSignOnNew = '1'        #If set to '0', the signature will be added as signature for new mails.
@@ -72,6 +72,9 @@ If ($NeedIt -gt 0)
     if (!(Test-Path -path $LocalSignaturePath)) {
            New-Item $LocalSignaturePath -Type Directory
     }
+    $wshell = New-Object -ComObject Wscript.Shell
+    $wshell.Popup("Hello, Your email signature is going to be updated. Please answer the next 4 questions. Please be careful, if you do a mistake, you will need to call support!",0,"Warning",0x1)
+
     [void][Reflection.Assembly]::LoadWithPartialName('Microsoft.VisualBasic')
     $strName = [Microsoft.VisualBasic.Interaction]::InputBox("Enter your full name (ex: Albert Einstein)","Enter Full Name")
     $strTitle = [Microsoft.VisualBasic.Interaction]::InputBox("Enter your Job Title :", "Enter your Job Title")
