@@ -31,8 +31,6 @@
 
 
     #Environment variables
-    $wdTypes = Add-Type -AssemblyName 'Microsoft.Office.Interop.Word' -Passthru
-    $wdSaveFormat = $wdTypes | Where {$_.Name -eq "wdSaveFormat"}
     $NeedIt = 0
 
     $AppData=(Get-Item env:appdata).value
