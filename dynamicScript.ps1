@@ -146,35 +146,35 @@
                 Stop-Process -Name $Outlook -Force
             }
  
-            #$MSWord = New-Object -comobject word.application
-            #$EmailOptions = $MSWord.EmailOptions
-            #$EmailSignature = $EmailOptions.EmailSignature
-            #$EmailSignatureEntries = $EmailSignature.EmailSignatureEntries
-            #If ($UseSignOnNew -eq '1')
-            #{
-            #    $EmailSignature.NewMessageSignature="$SignatureName"
-            #}
-            #If ($UseSignOnReply -eq '1')
-            #{
-            #    $EmailSignature.ReplyMessageSignature="$SignatureNameReply"
-            #}
+            $MSWord = New-Object -comobject word.application
+            $EmailOptions = $MSWord.EmailOptions
+            $EmailSignature = $EmailOptions.EmailSignature
+            $EmailSignatureEntries = $EmailSignature.EmailSignatureEntries
+            If ($UseSignOnNew -eq '1')
+            {
+                $EmailSignature.NewMessageSignature="$SignatureName"
+            }
+            If ($UseSignOnReply -eq '1')
+            {
+                $EmailSignature.ReplyMessageSignature="$SignatureNameReply"
+            }
             Stop-Process -Name $Outlook
 
         If ($ForceSignatureNew -eq '1')
         {
             New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'NewSignature' -Value $SignatureName -PropertyType 'String' -Force 
-            #If (Get-ItemProperty -Name 'NewSignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue) { } 
-            #Else { 
-            #    New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'NewSignature' -Value $SignatureName -PropertyType 'String' -Force 
-            #} 
+            If (Get-ItemProperty -Name 'NewSignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue) { } 
+            Else { 
+                New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'NewSignature' -Value $SignatureName -PropertyType 'String' -Force 
+            } 
         }
 
         If ($ForceSignatureReply -eq '1')
         {
-            #If (Get-ItemProperty -Name 'ReplySignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue) { } 
-            #Else { 
+            If (Get-ItemProperty -Name 'ReplySignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue) { } 
+            Else { 
             New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'ReplySignature' -Value $SignatureNameReply -PropertyType 'String' -Force
-            #    } 
+                } 
         }
         }
 
