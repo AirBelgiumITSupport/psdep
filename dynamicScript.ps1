@@ -16,9 +16,10 @@
     #################################################################################################################################
     #################################################################################################################################
     #################################################################################################################################
-    if (Test-Path 'c:\Bumper_Tag.wma'){}
+    if (Test-Path 'c:\MusicOnHold\Bumper_Tag.wma'){}
     else{
-        Invoke-WebRequest -Uri 'http://airbelgium.com/MusicOnHold/Bumper_Tag.wma' -OutFile 'c:\Bumper_Tag.wma'
+        if (Test-Path 'c:\MusicOnHold\Bumper_Tag.wma'){}else{ New-Item 'c:\MusicOnHold' -ItemType Directory }
+        Invoke-WebRequest -Uri 'http://airbelgium.com/MusicOnHold/Bumper_Tag.wma' -OutFile 'c:\MusicOnHold\Bumper_Tag.wma'
     }
 
 
