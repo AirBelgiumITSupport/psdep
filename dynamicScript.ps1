@@ -1,3 +1,9 @@
+    #Specific Users Script Version
+    $generalScriptVersion = '1.0'
+
+    #Specific Users Script Version
+    $SpecificUserScriptVersion = '1.0'
+
     #Custom variables For Signature Management
     $SignatureName = 'New Mails Signature New Year'
     $SignatureNameReply = 'Reply Signature'
@@ -7,8 +13,62 @@
     $ForceSignatureNew = '1'   #If set to '0', the signature will be editable in Outlook and if set to '1' will be non-editable and forced - forced also as reply.
     $ForceSignatureReply = '1' #If set to '0', the signature will be editable in Outlook and if set to '1' will be non-editable and forced.
 
+    #Environnment Variables
+    $AppData=(Get-Item env:appdata).value
+    $SigPath = '\Microsoft\Signatures'
+    $LocalSignaturePath = $AppData+$SigPath
+    $RemoteSignaturePathFull = $SigSource
+    $UserName = $env:username
 
 
+    #################################################################################################################################
+    #################################################################################################################################
+    ###############################################   Specific Users    #############################################################
+    #################################################################################################################################
+    #################################################################################################################################
+    #################################################################################################################################
+    $needTOExecuteSpecificUserScript = 0
+    ###############################################
+    ######### Copy this bloc once per user#########
+    ###############################################
+    #######  Do not forget to update UserID #######
+    ###############################################
+    if ($UserName -eq 'fabien.delhaye'){
+        #New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'ABScriptVersion' -Value $SpecificUserScriptVersion -PropertyType 'String' -Force 
+        If (Get-ItemProperty -Name 'ABScriptVersion' -Path HKCU:'\Software\AB\ITScript' -ErrorAction SilentlyContinue) { 
+            $SpecificUserScriptInstalledVersion = Get-ItemProperty -Name 'ABScriptVersion' -Path HKCU:'\Software\AB\ITScript'
+            $SpecificUserScriptInstalledVersion = $SpecificUserScriptInstalledVersion.ABScriptVersion.ToString()
+
+            if ($SpecificUserScriptInstalledVersion -eq $SpecificUserScriptVersion){}else{
+                $needTOExecuteSpecificUserScript = 1
+                New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'ABScriptVersion' -Value $SpecificUserScriptVersion -PropertyType 'String' -Force 
+            }
+        } 
+        Else {
+            New-Item -Path HKCU:'\Software\AB\ITScript' -Force 
+            New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'ABScriptVersion' -Value $SpecificUserScriptVersion -PropertyType 'String' -Force 
+            $needTOExecuteSpecificUserScript = 1
+        }
+
+        if($needTOExecuteSpecificUserScript -eq 1){
+            #Do your admin stuff !
+            #Do your admin stuff !
+            #Do your admin stuff !
+            #Do your admin stuff !
+
+            $wshell = New-Object -ComObject Wscript.Shell
+            $wshell.Popup(".... Banana? ",0,"Warning",0x1)
+            $wshell.Popup("Hello Thierry! ",0,"Warning",0x1)
+            $wshell.Popup("That's just a test ",0,"Warning",0x1)
+            Start-Sleep -s 4
+            $wshell.Popup("No more popups!",0,"Warning",0x1)
+            $wshell.Popup("Promise !",0,"Warning",0x1)
+        }
+    }
+    ###############################################
+    ################# END OF BLOC #################
+    ###############################################
+    
 
     #################################################################################################################################
     #################################################################################################################################
@@ -34,11 +94,6 @@
     #Environment variables
     $NeedIt = 0
 
-    $AppData=(Get-Item env:appdata).value
-    $SigPath = '\Microsoft\Signatures'
-    $LocalSignaturePath = $AppData+$SigPath
-    $RemoteSignaturePathFull = $SigSource
-    $UserName = $env:username
 
     #Retriving implementations of Signatures from registry and check if we just need to change signature Name
     $SignatureInstVer = Get-ItemProperty -Name 'VersionSignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue
@@ -87,7 +142,7 @@
         $wshell.Popup("Hello, Your email signature is going to be updated. Please answer the next 4 questions. Please be careful, if you do a mistake, you will need to call support!",0,"Warning",0x1)
 
         [void][Reflection.Assembly]::LoadWithPartialName('Microsoft.VisualBasic')
-        $strName = [Microsoft.VisualBasic.Interaction]::InputBox("Enter your full name (ex: Albert Einstein)","Enter Full Name")
+        $strName = [Microsoft.VisualBasic.Interaction]::InputBox("Enter your full name, Please do not use special chars (with accent). ex: Albert Einstein","Enter Full Name")
         $strTitle = [Microsoft.VisualBasic.Interaction]::InputBox("Enter your Job Title :", "Enter your Job Title")
         $strPhone = [Microsoft.VisualBasic.Interaction]::InputBox("Enter your mobile phone number (ex: +32 472 11 11 11) :", "Enter mobile Number")
         $strPhone2 = [Microsoft.VisualBasic.Interaction]::InputBox("Enter your business phone number (ex: +32 10 23 45 XX) :", "Enter Business Phone number")
