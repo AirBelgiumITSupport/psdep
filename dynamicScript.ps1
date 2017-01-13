@@ -1,4 +1,4 @@
-    #Specific Users Script Version
+    #general Script Version
     $generalScriptVersion = '1.0'
 
     #Specific Users Script Version
@@ -12,6 +12,12 @@
     $UseSignOnReply = '1'      #If set to '0', the signature will be added as signature for reply mails.
     $ForceSignatureNew = '1'   #If set to '0', the signature will be editable in Outlook and if set to '1' will be non-editable and forced - forced also as reply.
     $ForceSignatureReply = '1' #If set to '0', the signature will be editable in Outlook and if set to '1' will be non-editable and forced.
+
+
+
+
+
+
 
     #Environnment Variables
     $AppData=(Get-Item env:appdata).value
@@ -33,7 +39,7 @@
     ###############################################
     #######  Do not forget to update UserID #######
     ###############################################
-    if ($UserName -eq 'fabien.delhaye'){
+    if ($UserName -eq 'thierry.naert'){
         #New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'ABScriptVersion' -Value $SpecificUserScriptVersion -PropertyType 'String' -Force 
         If (Get-ItemProperty -Name 'ABScriptVersion' -Path HKCU:'\Software\AB\ITScript' -ErrorAction SilentlyContinue) { 
             $SpecificUserScriptInstalledVersion = Get-ItemProperty -Name 'ABScriptVersion' -Path HKCU:'\Software\AB\ITScript'
