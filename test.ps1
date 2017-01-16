@@ -262,8 +262,8 @@
         } 
 
 
-        $wshell = New-Object -ComObject Wscript.Shell
-        $wshell.Popup('Script is completed! Mail signatures in Outlook have been updated',0,'All Done',0x0)
+        #$wshell = New-Object -ComObject Wscript.Shell
+        #$wshell.Popup('Script is completed! Mail signatures in Outlook have been updated',0,'All Done',0x0)
     }
 
 
