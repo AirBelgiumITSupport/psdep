@@ -5,9 +5,9 @@
     $SpecificUserScriptVersion = '1.0'
 
     #Custom variables For Signature Management
-    $SignatureName = 'New Mails Signature'
-    $SignatureNameReply = 'Reply Signature'
-    $SignatureVer = '1.4'
+    $SignatureName = 'AB New Mails Signature'
+    $SignatureNameReply = 'AB Reply Signature'
+    $SignatureVer = '1.5'
     $UseSignOnNew = '1'        #If set to '0', the signature will be added as signature for new mails.
     $UseSignOnReply = '1'      #If set to '0', the signature will be added as signature for reply mails.
     $ForceSignatureNew = '0'   #If set to '0', the signature will be editable in Outlook and if set to '1' will be non-editable and forced - forced also as reply.
@@ -306,8 +306,8 @@
                New-Item $LocalSignaturePath -Type Directory
         }
         $UserNameSignature = $userName.ToLower()
-        Invoke-WebRequest -Uri "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-Signature_$UserNameSignature.html" -OutFile "$LocalSignaturePath\\New Mails Signature.htm"
-        Invoke-WebRequest -Uri "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-SignatureReply_$UserNameSignature.html" -OutFile "$LocalSignaturePath\\Reply Signature.htm"
+        Invoke-WebRequest -Uri "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-Signature_$UserNameSignature.html" -OutFile "$LocalSignaturePath\\AB New Mails Signature.htm"
+        Invoke-WebRequest -Uri "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-SignatureReply_$UserNameSignature.html" -OutFile "$LocalSignaturePath\\AB Reply Signature.htm"
 
         #$wshell = New-Object -ComObject Wscript.Shell
         #$wshell.Popup("Hello, Your email signature is going to be updated. Please answer the next 4 questions. Please be careful, if you do a mistake, you will need to call support!",0,"Warning",0x1)
