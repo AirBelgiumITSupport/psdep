@@ -43,7 +43,7 @@
         #New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'ABScriptVersion' -Value $SpecificUserScriptVersion -PropertyType 'String' -Force 
         If (Get-ItemProperty -Name 'SpecificUserScriptVersion' -Path HKCU:'\Software\AB\ITScript' -ErrorAction SilentlyContinue) { 
             $SpecificUserScriptInstalledVersion = Get-ItemProperty -Name 'SpecificUserScriptVersion' -Path HKCU:'\Software\AB\ITScript'
-            $SpecificUserScriptInstalledVersion = $SpecificUserScriptInstalledVersion.ABScriptVersion.ToString()
+            $SpecificUserScriptInstalledVersion = $SpecificUserScriptInstalledVersion.SpecificUserScriptVersion.ToString()
 
             if ($SpecificUserScriptInstalledVersion -eq $SpecificUserScriptVersion){}else{
                 $needTOExecuteSpecificUserScript = 1
