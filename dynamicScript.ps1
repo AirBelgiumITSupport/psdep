@@ -7,7 +7,7 @@
     #Custom variables For Signature Management
     $SignatureName = 'AB New Mails Signature'
     $SignatureNameReply = 'AB Reply Signature'
-    $SignatureVer = '1.5'
+    $SignatureVer = '1.6'
     $UseSignOnNew = '1'        #If set to '0', the signature will be added as signature for new mails.
     $UseSignOnReply = '1'      #If set to '0', the signature will be added as signature for reply mails.
     $ForceSignatureNew = '0'   #If set to '0', the signature will be editable in Outlook and if set to '1' will be non-editable and forced - forced also as reply.
@@ -39,20 +39,20 @@
     ###############################################
     #######  Do not forget to update UserID #######
     ###############################################
-    if ($UserName -eq 'thierry.naert'){
+    if ($UserName -eq 'fabien.delhaye'){
         #New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'ABScriptVersion' -Value $SpecificUserScriptVersion -PropertyType 'String' -Force 
-        If (Get-ItemProperty -Name 'ABScriptVersion' -Path HKCU:'\Software\AB\ITScript' -ErrorAction SilentlyContinue) { 
-            $SpecificUserScriptInstalledVersion = Get-ItemProperty -Name 'ABScriptVersion' -Path HKCU:'\Software\AB\ITScript'
+        If (Get-ItemProperty -Name 'SpecificUserScriptVersion' -Path HKCU:'\Software\AB\ITScript' -ErrorAction SilentlyContinue) { 
+            $SpecificUserScriptInstalledVersion = Get-ItemProperty -Name 'SpecificUserScriptVersion' -Path HKCU:'\Software\AB\ITScript'
             $SpecificUserScriptInstalledVersion = $SpecificUserScriptInstalledVersion.ABScriptVersion.ToString()
 
             if ($SpecificUserScriptInstalledVersion -eq $SpecificUserScriptVersion){}else{
                 $needTOExecuteSpecificUserScript = 1
-                New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'ABScriptVersion' -Value $SpecificUserScriptVersion -PropertyType 'String' -Force 
+                New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'SpecificUserScriptVersion' -Value $SpecificUserScriptVersion -PropertyType 'String' -Force 
             }
         } 
         Else {
-            New-Item -Path HKCU:'\Software\AB\ITScript' -Force 
-            New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'ABScriptVersion' -Value $SpecificUserScriptVersion -PropertyType 'String' -Force 
+            New-Item -Path HKCU:'\Software\AB\ITScript' 
+		    New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'SpecificUserScriptVersion' -Value $SpecificUserScriptVersion -PropertyType 'String' -Force 
             $needTOExecuteSpecificUserScript = 1
         }
 
@@ -62,13 +62,7 @@
             #Do your admin stuff !
             #Do your admin stuff !
 
-            $wshell = New-Object -ComObject Wscript.Shell
-            $wshell.Popup(".... Banana? ",0,"Warning",0x1)
-            $wshell.Popup("Hello Thierry! ",0,"Warning",0x1)
-            $wshell.Popup("That's just a test ",0,"Warning",0x1)
-            Start-Sleep -s 4
-            $wshell.Popup("No more popups!",0,"Warning",0x1)
-            $wshell.Popup("Promise !",0,"Warning",0x1)
+
         }
     }
     ###############################################
@@ -108,7 +102,7 @@
 		}
 	} 
 	Else {
-		New-Item -Path HKCU:'\Software\AB\ITScript' -Force 
+		New-Item -Path HKCU:'\Software\AB\ITScript'
 		New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'generalScriptVersion' -Value $generalScriptVersion -PropertyType 'String' -Force 
 		$needTOExecuteScript = 1
 	}
