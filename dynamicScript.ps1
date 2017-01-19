@@ -1,5 +1,5 @@
     #general Script Version
-    $generalScriptVersion = '1.0'
+    $generalScriptVersion = '1.1'
 
     #Specific Users Script Version
     $SpecificUserScriptVersion = '1.0'
@@ -13,8 +13,8 @@
     $ForceSignatureNew = '0'   #If set to '0', the signature will be editable in Outlook and if set to '1' will be non-editable and forced - forced also as reply.
     $ForceSignatureReply = '0' #If set to '0', the signature will be editable in Outlook and if set to '1' will be non-editable and forced.
 
-
-
+    #Sites to be added as trusted
+    $SubDomain = "lync.com", "outlook.com", "microsoftonline.com", "sharepoint.com", "airbusworld.com", "airbusdoc.com", "airbus.com", "airbus2.com"  #This will add: https://*.lync.com/ etc.
 
 
 
@@ -241,7 +241,30 @@
         Pin-App "Skype for Business 2016" -pin -taskbar   
         Pin-App "Store" -unpin -start
         Pin-App "Store" -unpin -taskbar
-	}
+
+
+
+        #Initialize key variables
+        $UserRegPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings\ZoneMap\Domains"
+        $DWord = 2
+        #Main function
+        If($TrustedSites)
+        {
+            #Adding trusted sites in the registry
+            Foreach($TruestedSite in $TrustedSites)
+            {
+                #If user does not specify the user type. By default,the script will add the trusted sites for the current user.
+                    New-Item -Path $UserRegPath\$TruestedSite -Force
+                    New-Item -Path $UserRegPath\$TruestedSite\* -Force
+                    New-ItemProperty $UserRegPath\$TruestedSite\* -Name 'https' -Value 2 -PropertyType 'DWORD' -Force
+                    Write-Host "Successfully added '$TruestedSite' domain to trusted Sites in Internet Explorer."
+            }
+        }
+
+	 }
+
+
+
 
 
     #################################################################################################################################
