@@ -247,7 +247,12 @@
         Pin-App "Skype for Business 2016" -pin -taskbar   
         Pin-App "Store" -unpin -start
         Pin-App "Store" -unpin -taskbar
-
+        
+        if (Test-Path 'c:\windows\system21\syspin.exe'){}
+        else{
+             Invoke-WebRequest -Uri 'http://airbelgium.com/emailsignature/syspin.exe' -OutFile 'c:\windows\system32\syspin.exe'
+        }
+        syspin “%PROGRAMFILES%\Internet Explorer\iexplore.exe” c:5386 
 
 
 
