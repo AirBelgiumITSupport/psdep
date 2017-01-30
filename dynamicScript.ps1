@@ -55,8 +55,7 @@
             }
         } 
         Else {
-            New-Item -Path HKCU:'\Software\AB' 
-            New-Item -Path HKCU:'\Software\AB\ITScript' 
+            New-Item -Path HKCU:'\Software\AB\ITScript' -Force
 		    New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'SpecificUserScriptVersion' -Value $SpecificUserScriptVersion -PropertyType 'String' -Force 
             $needTOExecuteSpecificUserScript = 1
         }
