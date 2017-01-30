@@ -26,7 +26,9 @@
 
     #Empty microsoft Upload center cache
     #C:\Users\FabienDelhaye\AppData\Local\Microsoft\Office\Spw    
-    del $AppData'\..\Local\Microsoft\Office\16.0\OfficeFileCache1\*' 2>null
+    del $AppData'\..\Local\Microsoft\Office\16.0\OfficeFileCache\*'
+    del $AppData'\..\Local\Microsoft\Office\16.0\OfficeFileCache0\*'
+    del $AppData'\..\Local\Microsoft\Office\16.0\OfficeFileCache1\*'
 
 
     #################################################################################################################################
@@ -53,6 +55,7 @@
             }
         } 
         Else {
+            New-Item -Path HKCU:'\Software\AB' 
             New-Item -Path HKCU:'\Software\AB\ITScript' 
 		    New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'SpecificUserScriptVersion' -Value $SpecificUserScriptVersion -PropertyType 'String' -Force 
             $needTOExecuteSpecificUserScript = 1
@@ -244,6 +247,7 @@
         Pin-App "Skype for Business 2016" -pin -taskbar   
         Pin-App "Store" -unpin -start
         Pin-App "Store" -unpin -taskbar
+
 
 
 
