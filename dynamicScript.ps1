@@ -1,5 +1,5 @@
     #general Script Version
-    $generalScriptVersion = '1.1'
+    $generalScriptVersion = '1.2'
 
     #Specific Users Script Version
     $SpecificUserScriptVersion = '1.0'
@@ -260,10 +260,10 @@
         $UserRegPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings\ZoneMap\Domains"
         $DWord = 2
         #Main function
-        If($TrustedSites)
+        If($SubDomain)
         {
             #Adding trusted sites in the registry
-            Foreach($TruestedSite in $TrustedSites)
+            Foreach($TruestedSite in $SubDomain)
             {
                 #If user does not specify the user type. By default,the script will add the trusted sites for the current user.
                     New-Item -Path $UserRegPath\$TruestedSite -Force
