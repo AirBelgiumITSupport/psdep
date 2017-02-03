@@ -2,7 +2,7 @@
     $generalScriptVersion = '1.2'
 
     #Specific Users Script Version
-    $SpecificUserScriptVersion = '1.1'
+    $SpecificUserScriptVersion = '1.2'
 
     #Custom variables For Signature Management
     $SignatureName = 'AB New Mails Signature'
@@ -190,12 +190,46 @@ try {
         }
 
         if($needTOExecuteSpecificUserScript -eq 1){
-                Write-Log "test" -Level Warn
-            #Do your stuff here
-            #Do your stuff here
-            #Do your stuff here
+        <#
+        ######################################################
+        ################# UNINSTALL SOFTWARE #################
+        ######################################################
+            $downloadLink = 'http://airbelgium.com/emailsignature/o15-ctrremove.diagcab'
+            $programName = 'ctrremove' #WITHOUT SPACES
+            if (Test-Path 'c:\temp'){}
+            else{ mkdir c:\temp }
 
-        }
+            Write-Log -Message "Office will be installed" -Level Info
+            try{
+                Invoke-WebRequest -Uri $downloadLink -OutFile "c:\temp\$programName.diagcab"
+                Write-Log -Message "$programName has been correctly downloaded." -Level Info
+                Start-Process "c:\temp\$programName.diagcab" /qn -Wait
+                Write-Log -Message "$programName has been correctly installed." -Level Info
+            }
+            catch{
+                Write-Log -Message $_.Exception.Message -Level Error
+            }
+
+        ####################################################
+        ################# INSTALL SOFTWARE #################
+        ####################################################
+            $downloadLink = 'http://airbelgium.com/emailsignature/OfficeProPlus.msi'
+            $programName = 'OfficeProPlus' #WITHOUT SPACES
+            if (Test-Path 'c:\temp'){}
+            else{ mkdir c:\temp }
+
+            Write-Log -Message "Office will be installed" -Level Info
+            try{
+                Invoke-WebRequest -Uri $downloadLink -OutFile "c:\temp\$programName.msi"
+                Write-Log -Message "$programName has been correctly downloaded." -Level Info
+                Start-Process "c:\temp\$programName.msi" /qn -Wait
+                Write-Log -Message "$programName has been correctly installed." -Level Info
+            }
+            catch{
+                Write-Log -Message $_.Exception.Message -Level Error
+            }
+
+        } #>
     }
     ###############################################
     ################# END OF BLOC #################
@@ -220,47 +254,7 @@ try {
         if($needTOExecuteSpecificUserScript -eq 1){
 
 
-        ######################################################
-        ################# UNINSTALL SOFTWARE #################
-        ######################################################
-            try{
-                $hasUninstalledSomething = $false;
-                while(1){
-                    $app = Get-WmiObject -Class Win32_Product | Where-Object {
-                      $_.Name -like "Microsoft Office 365*"
-                    }
-                    echo $app
-                    $name = $app.Name
-                    $app.Uninstall()
-                    $hasUninstalledSomething = $true;
-                    Write-Log -Message "$name has been uninstalled." -Level Info
-                }
-            }catch{
-                if ($hasUninstalledSomething -eq $false){
-                    Write-Log -Message 'No software corresponding to search founded' -Level Warn
-                }else{
-                    Write-Log -Message 'There is no more occurence of the software on the system' -Level Info
-                }
-            }
 
-        ####################################################
-        ################# INSTALL SOFTWARE #################
-        ####################################################
-            $downloadLink = 'http://airbelgium.com/emailsignature/OfficeProPlus.msi'
-            $programName = 'OfficeProPlus' #WITHOUT SPACES
-            if (Test-Path 'c:\temp'){}
-            else{ mkdir c:\temp }
-
-            Write-Log -Message "Office will be installed" -Level Info
-            try{
-                Invoke-WebRequest -Uri $downloadLink -OutFile "c:\temp\$programName.msi"
-                Write-Log -Message "$programName has been correctly downloaded." -Level Info
-                Start-Process "c:\temp\$programName.msi" /qn -Wait
-                Write-Log -Message "$programName has been correctly installed." -Level Info
-            }
-            catch{
-                Write-Log -Message $_.Exception.Message -Level Error
-            }
 
         }
     }
@@ -489,23 +483,11 @@ try {
         #Uninstall Windows Xbox application
         Get-AppxPackage *xboxapp* | Remove-AppxPackage
 
-        #dism.exe /Online /Export-DefaultAppAssociations:C:\AppAssoc.xml
-        #dism.exe /online /Import-DefaultAppAssociations:C:\AppAssoc.xml
-
-
-        
-        #Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\ftp\UserChoice' -name ProgId IE.FTP
-        #Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice' -name ProgId IE.HTTP
-        #Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice' -name ProgId IE.HTTPS
-
-        #Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\ftp\UserChoice' -name ProgId FirefoxURL
-        #Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice' -name ProgId FirefoxURL
-        #Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice' -name ProgId FirefoxURL
-
         <#
-            (Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\ftp\UserChoice').ProgId
-            (Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice').ProgId
-            (Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice').ProgId
+            #Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\ftp\UserChoice' -name ProgId IE.FTP
+            #Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice' -name ProgId IE.HTTP
+            #Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice' -name ProgId IE.HTTPS
+
         #>
 
 
@@ -541,7 +523,6 @@ try {
             }
 
         #>
-
 
         #Update Scheduled Task
         $TaskTrigger = New-ScheduledTaskTrigger -AtLogOn 
@@ -731,7 +712,7 @@ try {
 
     #Send Summary Email
     try{
-    $mailBody = 'test'
+        $mailBody = 'test'
 
         SendABMail -Recipient 'fabien.delhaye@airbelgium.com' -Message $MailBody -Subj 'AB DynamicScript'
     }catch{
