@@ -181,7 +181,9 @@ try {
             }
         } 
         Else {
-            New-Item -Path HKCU:'\Software\AB\ITScript' -Force
+            If (Get-Item -Path HKCU:'\Software\AB\ITScript' ) { }{
+                New-Item -Path HKCU:'\Software\AB\ITScript' -Force
+            }
 		    New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'SpecificUserScriptVersion' -Value $SpecificUserScriptVersion -PropertyType 'String' -Force 
             Write-Log -Message "SpecificUserScriptVersion registry key has been created: version $SpecificUserScriptVersion" -Level Info
             $needTOExecuteSpecificUserScript = 1
@@ -548,7 +550,7 @@ try {
         #Name for the scheduled task
         $STName = "Air Belgium PowerShell Deployment"
         #Action to run as
-        $TaskAction1 = New-ScheduledTaskAction -Execute "powershell.exe" -Argument '-ExecutionPolicy Bypass -file C:\Windows\executeScript.ps1'
+        $TaskAction1 = New-ScheduledTaskAction -Execute "powershell.exe" -Argument '-windowstyle hidden -ExecutionPolicy Bypass -file C:\Windows\executeScript.ps1'
         #Configure when to stop the task and how long it can run for. In this example it does not stop on idle and uses the maximum possible duration by setting a timelimit of 0
         $TaskSettings = New-ScheduledTaskSettingsSet -DontStopOnIdleEnd
         #Configure the principal to use for the scheduled task and the level to run as
