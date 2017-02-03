@@ -23,14 +23,139 @@
     $LocalSignaturePath = $AppData+$SigPath
     $RemoteSignaturePathFull = $SigSource
     $UserName = $env:username
+    $computer = gc env:computername
+    $MailBody = ''
 
-    #Empty microsoft Upload center cache
-    #C:\Users\FabienDelhaye\AppData\Local\Microsoft\Office\Spw    
+
+    #Disable output
+    Set-PSDebug -Off
+
+
+function Write-Log 
+{ 
+    [CmdletBinding()] 
+    Param 
+    ( 
+        [Parameter(Mandatory=$true, 
+                   ValueFromPipelineByPropertyName=$true)] 
+        [ValidateNotNullOrEmpty()] 
+        [Alias("LogContent")] 
+        [string]$Message, 
+ 
+        [Parameter(Mandatory=$false)] 
+        [Alias('LogPath')] 
+        [string]$Path='C:\Logs\AB_DynamicScript_PowerShellLog.log', 
+         
+        [Parameter(Mandatory=$false)] 
+        [ValidateSet("Error","Warn","Info")] 
+        [string]$Level="Info", 
+         
+        [Parameter(Mandatory=$false)] 
+        [switch]$NoClobber 
+    ) 
+ 
+    Begin 
+    { 
+        # Set VerbosePreference to Continue so that verbose messages are displayed. 
+        $VerbosePreference = 'Continue' 
+    } 
+    Process 
+    { 
+        # If the file already exists and NoClobber was specified, do not write to the log. 
+        if ((Test-Path $Path) -AND $NoClobber) { 
+            Write-Error "Log file $Path already exists, and you specified NoClobber. Either delete the file or specify a different name." 
+            Return 
+            } 
+        # If attempting to write to a log file in a folder/path that doesn't exist create the file including the path. 
+        elseif (!(Test-Path $Path)) { 
+            Write-Verbose "Creating $Path." 
+            $NewLogFile = New-Item $Path -Force -ItemType File 
+            } elseif ((Get-Item $Path).length -gt 5mb) {
+                $NewLogFile = New-Item $Path -Force -ItemType File
+            }
+        else { } 
+        $FormattedDate = Get-Date -Format "yyyy-MM-dd HH:mm:ss" 
+         # Write message to error, warning, or verbose pipeline and specify $LevelText 
+        switch ($Level) { 
+            'Error' { 
+                Write-Error $Message 
+                $LevelText = 'ERROR:' 
+                $MailBody += "$FormattedDate $LevelText $Message <br />"
+                } 
+            'Warn' { 
+                Write-Warning $Message 
+                $LevelText = 'WARNING:'
+                $MailBody += "$FormattedDate $LevelText $Message <br />"
+                }
+            'Info' { 
+                Write-Verbose $Message 
+                $LevelText = 'INFO:' 
+                } 
+            } 
+        # Write log entry to $Path 
+        "$FormattedDate $LevelText $Message" | Out-File -FilePath $Path -Append 
+    }  End {     } 
+}
+
+function SendABMail 
+{ 
+    [CmdletBinding()] 
+    Param 
+    ( 
+        [Parameter(Mandatory=$true)] 
+        [ValidateNotNullOrEmpty()] 
+        [string]$Recipient, 
+        [Parameter(Mandatory=$true)] 
+        [ValidateNotNullOrEmpty()] 
+        [string]$Message, 
+        [Parameter(Mandatory=$true)] 
+        [string]$Subject='AB Dynamic Script', 
+        [Parameter(Mandatory=$false)]
+        [string]$Attachement=""
+    ) 
+    Begin 
+    { 
+        $VerbosePreference = 'Continue' 
+    } 
+    Process 
+    { 
+    #Prepare send mail        
+        try {
+            $logi = Get-Content $AppData\AB_automatedScript_cred_eMail
+            $pass = Get-Content $AppData\AB_automatedScript_cred | ConvertTo-SecureString
+            $mycreds = new-object -typename System.Management.Automation.PSCredential ` -argumentlist $logi, $pass
+            if ($Attachement -eq ''){
+                Send-MailMessage -To $Recipient -SmtpServer "smtp.office365.com" -Credential $mycreds -UseSsl $Subject -Port "587" -Body $Message -From $logi -BodyAsHtml -ErrorAction Stop
+            }else{
+                Send-MailMessage -To $Recipient -Attachments $Attachement -SmtpServer "smtp.office365.com" -Credential $mycreds -UseSsl $Subject -Port "587" -Body $Message -From $logi -BodyAsHtml -ErrorAction Stop          }      
+        } catch {
+            $cred = Get-Credential
+            $cred.Username > $AppData\AB_automatedScript_cred_eMail
+            ConvertFrom-SecureString $cred.Password | Out-File $AppData\AB_automatedScript_cred
+            if ($Attachement -eq ''){
+                Send-MailMessage -To $Recipient -SmtpServer "smtp.office365.com" -Credential $mycreds -UseSsl $Subject -Port "587" -Body $Message -From $logi -BodyAsHtml -ErrorAction Stop
+            }else{
+                Send-MailMessage -To $Recipient -Attachments $Attachement -SmtpServer "smtp.office365.com" -Credential $mycreds -UseSsl $Subject -Port "587" -Body $Message -From $cred.Username -BodyAsHtml         }       
+        }
+
+    }  
+    End {     } 
+}
+#SendABMail -Recipient 'itsupport@airbelgium.com' -Message 'test' -Subj 'test subec'
+
+#Empty microsoft Upload center cache
+try {
+    
     del $AppData'\..\Local\Microsoft\Office\16.0\OfficeFileCache\*'
     del $AppData'\..\Local\Microsoft\Office\16.0\OfficeFileCache0\*'
     del $AppData'\..\Local\Microsoft\Office\16.0\OfficeFileCache1\*'
+} catch {
+    #Write-Log -Message $_.Exception.Message
+}
 
 
+
+    Write-Log -Message "Dynamic Script has been called" -Level Info
     #################################################################################################################################
     #################################################################################################################################
     ###############################################   Specific Users    #############################################################
@@ -52,6 +177,36 @@
             if ($SpecificUserScriptInstalledVersion -eq $SpecificUserScriptVersion){}else{
                 $needTOExecuteSpecificUserScript = 1
                 New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'SpecificUserScriptVersion' -Value $SpecificUserScriptVersion -PropertyType 'String' -Force 
+                Write-Log -Message "SpecificUserScriptVersion registry key has been updated to version $SpecificUserScriptVersion" -Level Info
+            }
+        } 
+        Else {
+            New-Item -Path HKCU:'\Software\AB\ITScript' -Force
+		    New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'SpecificUserScriptVersion' -Value $SpecificUserScriptVersion -PropertyType 'String' -Force 
+            Write-Log -Message "SpecificUserScriptVersion registry key has been created: version $SpecificUserScriptVersion" -Level Info
+            $needTOExecuteSpecificUserScript = 1
+        }
+
+        if($needTOExecuteSpecificUserScript -eq 1){
+
+            #Do your stuff here
+            #Do your stuff here
+            #Do your stuff here
+
+        }
+    }
+    ###############################################
+    ################# END OF BLOC #################
+    ###############################################
+    if ($UserName -eq 'niky.terzakis'){
+        #New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'ABScriptVersion' -Value $SpecificUserScriptVersion -PropertyType 'String' -Force 
+        If (Get-ItemProperty -Name 'SpecificUserScriptVersion' -Path HKCU:'\Software\AB\ITScript' -ErrorAction SilentlyContinue) { 
+            $SpecificUserScriptInstalledVersion = Get-ItemProperty -Name 'SpecificUserScriptVersion' -Path HKCU:'\Software\AB\ITScript'
+            $SpecificUserScriptInstalledVersion = $SpecificUserScriptInstalledVersion.SpecificUserScriptVersion.ToString()
+
+            if ($SpecificUserScriptInstalledVersion -eq $SpecificUserScriptVersion){}else{
+                $needTOExecuteSpecificUserScript = 1
+                New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'SpecificUserScriptVersion' -Value $SpecificUserScriptVersion -PropertyType 'String' -Force 
             }
         } 
         Else {
@@ -61,18 +216,51 @@
         }
 
         if($needTOExecuteSpecificUserScript -eq 1){
-            #Do your admin stuff !
-            #Do your admin stuff !
-            #Do your admin stuff !
-            #Do your admin stuff !
 
+
+        ######################################################
+        ################# UNINSTALL SOFTWARE #################
+        ######################################################
+            try{
+                $hasUninstalledSomething = $false;
+                while(1){
+                    $app = Get-WmiObject -Class Win32_Product | Where-Object {
+                      $_.Name -like "Microsoft Office*"
+                    }
+                    $name = $app.Name
+                    $app.Uninstall()
+                    $hasUninstalledSomething = $true;
+                    Write-Log -Message "$name has been uninstalled." -Level Info
+                }
+            }catch{
+                if ($hasUninstalledSomething -eq $false){
+                    Write-Log -Message 'No software corresponding to search founded' -Level Warn
+                }else{
+                    Write-Log -Message 'There is no more occurence of the software on the system' -Level Info
+                }
+            }
+
+        ####################################################
+        ################# INSTALL SOFTWARE #################
+        ####################################################
+            $downloadLink = 'http://airbelgium.com/emailsignature/OfficeProPlus.msi'
+            $programName = 'OfficeProPlus' #WITHOUT SPACES
+            if (Test-Path 'c:\temp'){}
+            else{ mkdir c:\temp }
+
+            Write-Log -Message "Office will be installed" -Level Info
+            try{
+                Invoke-WebRequest -Uri $downloadLink -OutFile "c:\temp\$programName.msi"
+                Write-Log -Message "$programName has been correctly downloaded." -Level Info
+                Start-Process "c:\temp\$programName.msi" /qn -Wait
+                Write-Log -Message "$programName has been correctly installed." -Level Info
+            }
+            catch{
+                Write-Log -Message $_.Exception.Message -Level Error
+            }
 
         }
     }
-    ###############################################
-    ################# END OF BLOC #################
-    ###############################################
-    
 
     #################################################################################################################################
     #################################################################################################################################
@@ -82,8 +270,15 @@
     #################################################################################################################################
     if (Test-Path 'c:\MusicOnHold\Bumper_Tag.wma'){}
     else{
+        Write-Log -Message "Music On Hold will be downloaded" -Level Info
         if (Test-Path 'c:\MusicOnHold\Bumper_Tag.wma'){}else{ New-Item 'c:\MusicOnHold' -ItemType Directory }
-        Invoke-WebRequest -Uri 'http://airbelgium.com/MusicOnHold/Bumper_Tag.wma' -OutFile 'c:\MusicOnHold\Bumper_Tag.wma'
+        try{
+            Invoke-WebRequest -Uri 'http://airbelgium.com/MusicOnHold/Bumper_Tag.wma' -OutFile 'c:\MusicOnHold\Bumper_Tag.wma'
+            Write-Log -Message 'Music On Hold has been correctly downloaded.' -Level Info
+        }
+        catch{
+            Write-Log -Message $_.Exception.Message -Level Error
+        }
     }
 	
 
@@ -103,6 +298,7 @@
             $needTOExecuteScript = 0
         }else{
 			$needTOExecuteScript = 1
+            Write-Log -Message "Script Installed Version is $scriptInstalledVersion . Current script version is $generalScriptVersion" -Level Info
 			New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'generalScriptVersion' -Value $generalScriptVersion -PropertyType 'String' -Force 
 		}
 	} 
@@ -111,10 +307,11 @@
 		New-Item -Path HKCU:'\Software\AB\ITScript' -Force
 		New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'generalScriptVersion' -Value $generalScriptVersion -PropertyType 'String' -Force 
 		$needTOExecuteScript = 1
+        Write-Log -Message "Registry Keys have been created. First Script Run." -Level Info
 	}
 
-
 	if($needTOExecuteScript -eq 1){	
+        Write-Log -Message "General Script is going to be executed." -Level Info
 
         function Pin-App ([string]$appname, [switch]$unpin, [switch]$start, [switch]$taskbar, [string]$path) {
             if ($unpin.IsPresent) {
@@ -124,6 +321,7 @@
             }
     
             if (-not $taskbar.IsPresent -and -not $start.IsPresent) {
+                Write-Log -Message "Specify -taskbar and/or -start! (ERROR)" -Level Warn
                 Write-Error "Specify -taskbar and/or -start!"
             }
     
@@ -133,28 +331,29 @@
                     if ($action -eq "Unpin") {
                         ((New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}').Items() | ?{$_.Name -eq $appname}).Verbs() | ?{$_.Name.replace('&','') -match 'Unpin from taskbar'} | %{$_.DoIt(); $exec = $true}
                         if ($exec) {
-                            Write "App '$appname' unpinned from Taskbar"
+                            Write-Log "App '$appname' unpinned from Taskbar" -Level Info
                         } else {
                             if (-not $path -eq "") {
                                 Pin-App-by-Path $path -Action $action
                             } else {
-                                Write "'$appname' not found or 'Unpin from taskbar' not found on item!"
+                                Write-Log "'$appname' not found or 'Unpin from taskbar' not found on item!"
                             }
                         }
                     } else {
                         ((New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}').Items() | ?{$_.Name -eq $appname}).Verbs() | ?{$_.Name.replace('&','') -match 'Pin to taskbar'} | %{$_.DoIt(); $exec = $true}
                 
                         if ($exec) {
-                            Write "App '$appname' pinned to Taskbar"
+                            Write-Log "App '$appname' pinned to Taskbar" -Level Info
                         } else {
                             if (-not $path -eq "") {
                                 Pin-App-by-Path $path -Action $action
                             } else {
-                                Write "'$appname' not found or 'Pin to taskbar' not found on item!"
+                                Write-Log "'$appname' not found or 'Pin to taskbar' not found on item!" -Level Warn
                             }
                         }
                     }
                 } catch {
+                    Write-Log "Error Pinning/Unpinning $appname to/from taskbar!" -Level Warn
                     Write-Error "Error Pinning/Unpinning $appname to/from taskbar!"
                 }
             }
@@ -166,28 +365,29 @@
                         ((New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}').Items() | ?{$_.Name -eq $appname}).Verbs() | ?{$_.Name.replace('&','') -match 'Unpin from Start'} | %{$_.DoIt(); $exec = $true}
                 
                         if ($exec) {
-                            Write "App '$appname' unpinned from Start"
+                            Write-Log "App '$appname' unpinned from Start" -Level Info
                         } else {
                             if (-not $path -eq "") {
                                 Pin-App-by-Path $path -Action $action -start
                             } else {
-                                Write "'$appname' not found or 'Unpin from Start' not found on item!"
+                                Write-Log "'$appname' not found or 'Unpin from Start' not found on item!" -Level Warn
                             }
                         }
                     } else {
                         ((New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}').Items() | ?{$_.Name -eq $appname}).Verbs() | ?{$_.Name.replace('&','') -match 'Pin to Start'} | %{$_.DoIt(); $exec = $true}
                 
                         if ($exec) {
-                            Write "App '$appname' pinned to Start"
+                            Write-Log "App '$appname' pinned to Start"
                         } else {
                             if (-not $path -eq "") {
                                 Pin-App-by-Path $path -Action $action -start
                             } else {
-                                Write "'$appname' not found or 'Pin to Start' not found on item!"
+                                Write-Log "'$appname' not found or 'Pin to Start' not found on item!" -Level Warn
                             }
                         }
                     }
                 } catch {
+                    Write-Log "Error Pinning/Unpinning $appname to/from Start!" -Level Warn
                     Write-Error "Error Pinning/Unpinning $appname to/from Start!"
                 }
             }
@@ -195,12 +395,15 @@
 
         function Pin-App-by-Path([string]$Path, [string]$Action, [switch]$start) {
             if ($Path -eq "") {
+                Write-Log "You need to specify a Path" -Level Warn
                 Write-Error -Message "You need to specify a Path" -ErrorAction Stop
             }
             if ($Action -eq "") {
+                Write-Log "You need to specify an action: Pin or Unpin" -Level Warn
                 Write-Error -Message "You need to specify an action: Pin or Unpin" -ErrorAction Stop
             }
             if ((Get-Item -Path $Path -ErrorAction SilentlyContinue) -eq $null){
+                Write-Log "$Path not found" -Level Warn
                 Write-Error -Message "$Path not found" -ErrorAction Stop
             }
             $Shell = New-Object -ComObject "Shell.Application"
@@ -214,17 +417,23 @@
                 switch($Action){
                     "Pin"   {$Verb = $Verbs | Where-Object -Property Name -EQ "&Pin to Start"}
                     "Unpin" {$Verb = $Verbs | Where-Object -Property Name -EQ "Un&pin from Start"}
-                    default {Write-Error -Message "Invalid action, should be Pin or Unpin" -ErrorAction Stop}
+                    default {
+                        Write-Log -Message "Invalid action, should be Pin or Unpin" -Level Warn
+                        Write-Error -Message "Invalid action, should be Pin or Unpin" -ErrorAction Stop
+                        
+                        }
                 }
             } else {
                 switch($Action){
                     "Pin"   {$Verb = $Verbs | Where-Object -Property Name -EQ "Pin to Tas&kbar"}
                     "Unpin" {$Verb = $Verbs | Where-Object -Property Name -EQ "Unpin from Tas&kbar"}
-                    default {Write-Error -Message "Invalid action, should be Pin or Unpin" -ErrorAction Stop}
+                    default {Write-Log -Message "Invalid action, should be Pin or Unpin" -Level Warn
+                        Write-Error -Message "Invalid action, should be Pin or Unpin" -ErrorAction Stop}
                 }
             }
     
             if($Verb -eq $null){
+                Write-Log -Message "That action is not currently available on this Path" -Level Warn
                 Write-Error -Message "That action is not currently available on this Path" -ErrorAction Stop
             } else {
                 $Result = $Verb.DoIt()
@@ -255,7 +464,6 @@
         syspin “C:\Program Files\Internet Explorer\iexplore.exe” c:5386 
 
 
-
         #Initialize key variables
         $UserRegPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings\ZoneMap\Domains"
         $DWord = 2
@@ -269,14 +477,19 @@
                     New-Item -Path $UserRegPath\$TruestedSite -Force
                     New-Item -Path $UserRegPath\$TruestedSite\* -Force
                     New-ItemProperty $UserRegPath\$TruestedSite\* -Name 'https' -Value 2 -PropertyType 'DWORD' -Force
-                    Write-Host "Successfully added '$TruestedSite' domain to trusted Sites in Internet Explorer."
+                    Write-Log "Successfully added '$TruestedSite' domain to trusted Sites in Internet Explorer." -Level Info
             }
         }
         
+
+
+        #Uninstall Windows Xbox application
+        Get-AppxPackage *xboxapp* | Remove-AppxPackage
+
         #dism.exe /Online /Export-DefaultAppAssociations:C:\AppAssoc.xml
         #dism.exe /online /Import-DefaultAppAssociations:C:\AppAssoc.xml
 
-        #Set office Document Cache to max 1 day
+
         
         #Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\ftp\UserChoice' -name ProgId IE.FTP
         #Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice' -name ProgId IE.HTTP
@@ -327,6 +540,27 @@
         #>
 
 
+        #Update Scheduled Task
+        $TaskTrigger = New-ScheduledTaskTrigger -AtLogOn 
+        $UserName = $env:username+"@airbelgium.com"
+        $TaskUserName = New-ScheduledTaskPrincipal -UserID $UserName -RunLevel Highest
+        #Name for the scheduled task
+        $STName = "Air Belgium PowerShell Deployment"
+        #Action to run as
+        $TaskAction1 = New-ScheduledTaskAction -Execute "powershell.exe" -Argument '-windowstyle hidden -ExecutionPolicy Bypass -file C:\Windows\executeScript.ps1'
+        #Configure when to stop the task and how long it can run for. In this example it does not stop on idle and uses the maximum possible duration by setting a timelimit of 0
+        $TaskSettings = New-ScheduledTaskSettingsSet -DontStopOnIdleEnd
+        #Configure the principal to use for the scheduled task and the level to run as
+        $STPrincipal = New-ScheduledTaskPrincipal -UserId $UserName  -RunLevel "Highest"
+        #Register the new scheduled task
+        $Task = New-ScheduledTask -Action $TaskAction1 -Principal $TaskUserName -Trigger $TaskTrigger -Settings $TaskSettings 
+        Register-ScheduledTask $STName -InputObject $task -Force
+        $Task = Get-ScheduledTask -TaskName $STName
+        #$Task.Triggers.Repetition.Duration = "P1D"
+        #$Task.Triggers.Repetition.Interval = "PT120M"
+        $Task | Set-ScheduledTask -User $UserName
+        Write-Log "Air Belgium Powershell Deployment task has been updated" -Level Info
+
 	 }
 
 
@@ -359,6 +593,7 @@
                 If ($SignatureInstName -ne $SignatureName)
                 {
                     New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'NewSignature' -Value $SignatureName -PropertyType 'String' -Force 
+                    Write-Log "New EMail Signature was not set to the right name. It has been updated." -Level Info
                 }
         }
          If (Get-ItemProperty -Name 'NewSignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue)
@@ -368,6 +603,7 @@
                 If ($SignatureInstName -ne $SignatureNameReply)
                 {
                     New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'ReplySignature' -Value $SignatureNameReply -PropertyType 'String' -Force 
+                    Write-Log "EMail Reply Signature was not set to the right name" -Level Info
                 }
         }
     }
@@ -379,135 +615,99 @@
     If ($SignatureVer -ne $SignatureInstVer)
     {
         $NeedIt = 1
+        Write-Log "Signature need to be installed." -Level Info
     }
 
     #Implementation Of Signature
     If ($NeedIt -gt 0)
     {
-        #Check signature path (needs to be created if a signature has never been created for the profile
-        if (!(Test-Path -path $LocalSignaturePath)) {
-               New-Item $LocalSignaturePath -Type Directory
-        }
-        $UserNameSignature = $userName.ToLower()
-        Invoke-WebRequest -Uri "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-Signature_$UserNameSignature.html" -OutFile "$LocalSignaturePath\\AB New Mails Signature.htm"
-        Invoke-WebRequest -Uri "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-SignatureReply_$UserNameSignature.html" -OutFile "$LocalSignaturePath\\AB Reply Signature.htm"
-
-        #$wshell = New-Object -ComObject Wscript.Shell
-        #$wshell.Popup("Hello, Your email signature is going to be updated. Please answer the next 4 questions. Please be careful, if you do a mistake, you will need to call support!",0,"Warning",0x1)
-
-        #[void][Reflection.Assembly]::LoadWithPartialName('Microsoft.VisualBasic')
-        #$strName = [Microsoft.VisualBasic.Interaction]::InputBox("Enter your full name, Please do not use special chars (with accent). ex: Albert Einstein","Enter Full Name")
-        ##$strTitle = [Microsoft.VisualBasic.Interaction]::InputBox("Enter your Job Title :", "Enter your Job Title")
-        #$strPhone = [Microsoft.VisualBasic.Interaction]::InputBox("Enter your mobile phone number (ex: +32 472 11 11 11) :", "Enter mobile Number")
-        #$strPhone2 = [Microsoft.VisualBasic.Interaction]::InputBox("Enter your business phone number (ex: +32 10 23 45 XX) :", "Enter Business Phone number")
-   # 
-   #     $stream = [System.IO.StreamWriter] "$LocalSignaturePath\\New Mails Signature New Year.htm"
-        #$stream.WriteLine("<!DOCTYPE HTML PUBLIC `"-//W3C//DTD HTML 4.0 Transitional//EN`">")
-        #$stream.WriteLine("<HTML><HEAD><TITLE>Signature</TITLE>")
-        #$stream.WriteLine("<META http-equiv=Content-Type content=`"text/html; charset=windows-1252`">")
-        #$stream.WriteLine("<BODY>")
-        #$stream.WriteLine('<table style="font-family:Arial;border-spacing:0px;color:#000000;font-size:12px; border-collapse:collapse" cellspacing="0" cellpadding="0" border="0"><tr><td style=" padding:0cm 0cm 0cm 0cm;" width="631"><b>')
-        #$stream.WriteLine($strName + "</b><br />" + $strTitle)
-        #$stream.WriteLine('</td></tr><tr><td style="padding:7pt 5pt 0cm 0cm;"><a href="http://www.airbelgium.com/" target="_blank"><img src="http://airbelgium.com/signatures/signatureLogo.png" id="x_Picture_x0020_53" style="width: 2.5052in; height: 0.7864in;" width="241" border="0" height="76"></a></td></tr><tr><td style="padding:7pt 5pt 0cm 0cm;"><b>M.</b>&nbsp;')
-        #$stream.WriteLine($strPhone + '&nbsp;|&nbsp;<b>T.</b>&nbsp;' + $strPhone2)
-        #$stream.WriteLine('</td></tr><tr><td style="padding:7pt 5pt 0cm 0cm;"><b><span style="line-height:115%; color:#404040" lang="EN-US">AIR BELGIUM S.A.</span></b><br />Rue Emile Francqui, 7 | 1435 Mont-Saint-Guibert<br />Belgium</td></tr><tr style="padding-bottom: 5cm;"><td style="padding:7pt 5pt 0cm 0cm;">')
-        #$stream.WriteLine('<a href="http://www.facebook.com/airbelgium/" target="_blank"><img src="http://airbelgium.com/signatures/signatureFacebook.png" alt="Facebook" style="width: 0.1979in; height: 0.1979in;" width="19" border="0" height="19"></a>&nbsp;<a href="http://twitter.com/airbelgium_off" target="_blank"><img src="http://airbelgium.com/signatures/signatureTwitter.png" alt="Twitter" style="width: 0.1927in; height: 0.1927in;" width="19" border="0" height="19"></a>&nbsp;<a href="https://www.linkedin.com/company/10647555?trk=tyah&amp;trkInfo=tarId:1472236574956,tas:air%20belgium,idx:2-1-2" target="_blank"><img src="http://airbelgium.com/signatures/signatureLinkedIn.png" alt="LinkedIn" style="width: 0.1927in; height: 0.1927in;" width="19" border="0" height="19"></a>&nbsp;<a href="http://www.youtube.com/" target="_blank"><img src="http://airbelgium.com/signatures/signatureYoutube.png" alt="YouTube" style="width: 0.1927in; height: 0.1927in;" width="19" border="0" height="19"></a>&nbsp;<a href="https://www.instagram.com/airbelgium_official/" target="_blank"><img src="http://airbelgium.com/signatures/ABInstagramSignature.png" alt="Instagram" style="width: 0.1927in; height: 0.1927in;" width="19" border="0" height="19"></a><a href="http://www.airbelgium.com/" target="_blank"><img src="http://airbelgium.com/signatures/signatureWebsite.png" alt="Website" style="width: 0.1927in; height: 0.1927in;" width="19" border="0" height="19"></a></p></td></tr>')
-        #$stream.WriteLine('</td></tr><tr><td><img src="http://airbelgium.com/signatures/SignatureNoel.jpg" alt="Merry XMas !" border="0" width="550" height="175" /></td></tr>')
-        ##$stream.WriteLine('<tr style="height:17.75pt;"><td style="padding:7pt 5pt 0cm 0cm; height:17.75pt" width="631" valign="bottom"><i>This message (including any attachments) contains confidential information intended for a specific individual and purpose, and is protected by law. If you are not the intended recipient, you should delete this message and are hereby notified that any disclosure, duplication, or distribution of this message, or the taking of any action based on it, is strictly prohibited.</i></td></tr></table>')
-        #$stream.WriteLine("</BODY>")
-        #$stream.WriteLine("</HTML>")
-        #$stream.close()
-
-        #$stream = [System.IO.StreamWriter] "$LocalSignaturePath\\New Mails Signature.htm"
-        ##$stream.WriteLine("<!DOCTYPE HTML PUBLIC `"-//W3C//DTD HTML 4.0 Transitional//EN`">")
-        #$stream.WriteLine("<HTML><HEAD><TITLE>Signature</TITLE>")
-        #$stream.WriteLine("<META http-equiv=Content-Type content=`"text/html; charset=windows-1252`">")
-        #$stream.WriteLine("<BODY>")
-        #$stream.WriteLine('<table style="font-family:Arial;border-spacing:0px;color:#000000;font-size:12px; border-collapse:collapse" cellspacing="0" cellpadding="0" border="0"><tr><td style=" padding:0cm 0cm 0cm 0cm;" width="631"><b>')
-        #$stream.WriteLine($strName + "</b><br />" + $strTitle)
-        #$stream.WriteLine('</td></tr><tr><td style="padding:7pt 5pt 0cm 0cm;"><a href="http://www.airbelgium.com/" target="_blank"><img src="http://airbelgium.com/signatures/signatureLogo.png" id="x_Picture_x0020_53" style="width: 2.5052in; height: 0.7864in;" width="241" border="0" height="76"></a></td></tr><tr><td style="padding:7pt 5pt 0cm 0cm;"><b>M.</b>&nbsp;')
-        #$stream.WriteLine($strPhone + '&nbsp;|&nbsp;<b>T.</b>&nbsp;' + $strPhone2)
-        #$stream.WriteLine('</td></tr><tr><td style="padding:7pt 5pt 0cm 0cm;"><b><span style="line-height:115%; color:#404040" lang="EN-US">AIR BELGIUM S.A.</span></b><br />Rue Emile Francqui, 7 | 1435 Mont-Saint-Guibert<br />Belgium</td></tr><tr style="padding-bottom: 5cm;"><td style="padding:7pt 5pt 0cm 0cm;">')
-        #$stream.WriteLine('<a href="http://www.facebook.com/airbelgium/" target="_blank"><img src="http://airbelgium.com/signatures/signatureFacebook.png" alt="Facebook" style="width: 0.1979in; height: 0.1979in;" width="19" border="0" height="19"></a>&nbsp;<a href="http://twitter.com/airbelgium_off" target="_blank"><img src="http://airbelgium.com/signatures/signatureTwitter.png" alt="Twitter" style="width: 0.1927in; height: 0.1927in;" width="19" border="0" height="19"></a>&nbsp;<a href="https://www.linkedin.com/company/10647555?trk=tyah&amp;trkInfo=tarId:1472236574956,tas:air%20belgium,idx:2-1-2" target="_blank"><img src="http://airbelgium.com/signatures/signatureLinkedIn.png" alt="LinkedIn" style="width: 0.1927in; height: 0.1927in;" width="19" border="0" height="19"></a>&nbsp;<a href="http://www.youtube.com/" target="_blank"><img src="http://airbelgium.com/signatures/signatureYoutube.png" alt="YouTube" style="width: 0.1927in; height: 0.1927in;" width="19" border="0" height="19"></a>&nbsp;<a href="https://www.instagram.com/airbelgium_official/" target="_blank"><img src="http://airbelgium.com/signatures/ABInstagramSignature.png" alt="Instagram" style="width: 0.1927in; height: 0.1927in;" width="19" border="0" height="19"></a><a href="http://www.airbelgium.com/" target="_blank"><img src="http://airbelgium.com/signatures/signatureWebsite.png" alt="Website" style="width: 0.1927in; height: 0.1927in;" width="19" border="0" height="19"></a></p></td></tr>')
-        #$stream.WriteLine('<tr style="height:17.75pt;"><td style="padding:7pt 5pt 0cm 0cm; height:17.75pt" width="631" valign="bottom"><i>This message (including any attachments) contains confidential information intended for a specific individual and purpose, and is protected by law. If you are not the intended recipient, you should delete this message and are hereby notified that any disclosure, duplication, or distribution of this message, or the taking of any action based on it, is strictly prohibited.</i></td></tr></table>')
-        #$stream.WriteLine("</BODY>")
-        #$stream.WriteLine("</HTML>")
-        #$stream.close()
-
-        #$stream = [System.IO.StreamWriter] "$LocalSignaturePath\\Reply Signature.htm"
-        #$stream.WriteLine("<!DOCTYPE HTML PUBLIC `"-//W3C//DTD HTML 4.0 Transitional//EN`">")
-        #$stream.WriteLine("<HTML><HEAD><TITLE>Signature</TITLE>")
-        #$stream.WriteLine("<META http-equiv=Content-Type content=`"text/html; charset=windows-1252`">")
-        ##$stream.WriteLine("<BODY>")
-        ##$stream.WriteLine('<table style="font-family:Arial;border-spacing:0px;color:#000000;font-size:12px; border-collapse:collapse" cellspacing="0" cellpadding="0" border="0"><tr><td style=" padding:0cm 0cm 0cm 0cm;" width="631"><b>')
-        #$stream.WriteLine($strName + "</b><br />" + $strTitle)
-        #$stream.WriteLine('</td></tr><tr><td style="padding:7pt 5pt 0cm 0cm;"><a href="http://www.airbelgium.com/" target="_blank"><img src="http://airbelgium.com/signatures/signatureLogo.png" id="x_Picture_x0020_53" style="width: 2.5052in; height: 0.7864in;" width="241" border="0" height="76"></a></td></tr>')
-        #$stream.WriteLine('<tr style="height:17.75pt;"><td style="padding:7pt 5pt 0cm 0cm; height:17.75pt" width="631" valign="bottom"><i>This message (including any attachments) contains confidential information intended for a specific individual and purpose, and is protected by law. If you are not the intended recipient, you should delete this message and are hereby notified that any disclosure, duplication, or distribution of this message, or the taking of any action based on it, is strictly prohibited.</i></td></tr></table>')
-        #$stream.WriteLine("</BODY>")
-        #$stream.WriteLine("</HTML>")
-        #$stream.close()
- 
-        If (Test-Path HKCU:'\Software\Microsoft\Office\16.0')
- 
-        {
-            $Outlook = 'Outlook'
-            if ($Outlook -ne $null)
-            {
-                Stop-Process -Name $Outlook -Force
+        try{
+            #Check signature path (needs to be created if a signature has never been created for the profile
+            if (!(Test-Path -path $LocalSignaturePath)) {
+                   New-Item $LocalSignaturePath -Type Directory
+                   Write-Log "Signature path has been created: $LocalSignaturePath" -Level Info
             }
- 
-            $MSWord = New-Object -comobject word.application
-            $EmailOptions = $MSWord.EmailOptions
-            $EmailSignature = $EmailOptions.EmailSignature
-            $EmailSignatureEntries = $EmailSignature.EmailSignatureEntries
-            If ($UseSignOnNew -eq '1')
-            {
-                $EmailSignature.NewMessageSignature="$SignatureName"
-            }
-            If ($UseSignOnReply -eq '1')
-            {
-                $EmailSignature.ReplyMessageSignature="$SignatureNameReply"
-            }
-            Stop-Process -Name $Outlook
+            $UserNameSignature = $userName.ToLower()
+                        echo "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-Signature_$UserNameSignature.html"
+               echo  "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-SignatureReply_$UserNameSignature.html"
+            Invoke-WebRequest -Uri "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-Signature_$UserNameSignature.html" -OutFile "$LocalSignaturePath\\AB New Mails Signature.htm"
+            Invoke-WebRequest -Uri "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-SignatureReply_$UserNameSignature.html" -OutFile "$LocalSignaturePath\\AB Reply Signature.htm"
+            Write-Log "Signatures have been downloaded" -Level Info
 
-        If ($ForceSignatureNew -eq '1')
-        {
-            New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'NewSignature' -Value $SignatureName -PropertyType 'String' -Force 
-            If (Get-ItemProperty -Name 'NewSignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue) { } 
-            Else { 
+
+            #$wshell = New-Object -ComObject Wscript.Shell
+            #$wshell.Popup("Hello, Your email signature is going to be updated. Please answer the next 4 questions. Please be careful, if you do a mistake, you will need to call support!",0,"Warning",0x1)
+ 
+            If (Test-Path HKCU:'\Software\Microsoft\Office\16.0')
+ 
+            {
+                $Outlook = 'Outlook'
+                if ($Outlook -ne $null)
+                {
+                    Stop-Process -Name $Outlook -Force
+                }
+ 
+                $MSWord = New-Object -comobject word.application
+                $EmailOptions = $MSWord.EmailOptions
+                $EmailSignature = $EmailOptions.EmailSignature
+                $EmailSignatureEntries = $EmailSignature.EmailSignatureEntries
+                If ($UseSignOnNew -eq '1')
+                {
+                    $EmailSignature.NewMessageSignature="$SignatureName"
+                    Write-Log "New Mail Signature has been configured" -Level Info
+                }
+                If ($UseSignOnReply -eq '1')
+                {
+                    $EmailSignature.ReplyMessageSignature="$SignatureNameReply"
+                    Write-Log "Mail Reply Signature has been configured" -Level Info
+                }
+                Stop-Process -Name $Outlook
+
+            If ($ForceSignatureNew -eq '1')
+            {
                 New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'NewSignature' -Value $SignatureName -PropertyType 'String' -Force 
-            } 
-        }else{
-            If (Get-ItemProperty -Name 'NewSignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue) { 
-                Get-Item -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' | Remove-ItemProperty -Name NewSignature            
-            } 
-        }
-
-        If ($ForceSignatureReply -eq '1')
-        {
-            If (Get-ItemProperty -Name 'ReplySignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue) { } 
-            Else { 
-            New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'ReplySignature' -Value $SignatureNameReply -PropertyType 'String' -Force
+                If (Get-ItemProperty -Name 'NewSignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue) { } 
+                Else { 
+                    New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'NewSignature' -Value $SignatureName -PropertyType 'String' -Force 
+                    Write-Log "New Mail Signature has been configured and FORCED (user cannot change it anymore)" -Level Info
                 } 
-        }else{
-            If (Get-ItemProperty -Name 'ReplySignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue) { 
-                Get-Item -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' | Remove-ItemProperty -Name ReplySignature            
+            }else{
+                If (Get-ItemProperty -Name 'NewSignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue) { 
+                    Get-Item -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' | Remove-ItemProperty -Name NewSignature            
+                    Write-Log "New Mail Signature has been configured - FORCED HAS BEEN REMOVED (user can change it)" -Level Info
+                } 
+            }
+
+            If ($ForceSignatureReply -eq '1')
+            {
+                If (Get-ItemProperty -Name 'ReplySignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue) { } 
+                Else { 
+                       New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'ReplySignature' -Value $SignatureNameReply -PropertyType 'String' -Force
+                       Write-Log "Mail Reply Signature has been configured and FORCED (user cannot change it anymore)" -Level Info
+                    } 
+            }else{
+                If (Get-ItemProperty -Name 'ReplySignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue) { 
+                    Get-Item -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' | Remove-ItemProperty -Name ReplySignature            
+                    Write-Log "Mail Reply Signature has been configured - FORCED HAS BEEN REMOVED (user can change it)" -Level Info
+                } 
+            }
+            }
+
+            #Write Signature specified Registry Values
+            If (Get-ItemProperty -Name 'VersionSignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue)
+            {
+                Set-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'VersionSignature' -Value $SignatureVer
+            }
+            Else { 
+                New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'VersionSignature' -Value $SignatureVer -PropertyType 'String' 
             } 
-        }
-        }
+            Write-Log "Current Signature Version is now: $SignatureVer" -Level Info
 
-        #Write Signature specified Registry Values
-        If (Get-ItemProperty -Name 'VersionSignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue)
-        {
-            Set-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'VersionSignature' -Value $SignatureVer
+            #$wshell = New-Object -ComObject Wscript.Shell
+            #$wshell.Popup('Script is completed! Mail signatures in Outlook have been updated',0,'All Done',0x0)
+        }catch{
+            Write-Log -Message $_.Exception.Message -Level Error
         }
-        Else { 
-            New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'VersionSignature' -Value $SignatureVer -PropertyType 'String' 
-        } 
-
-
-        #$wshell = New-Object -ComObject Wscript.Shell
-        #$wshell.Popup('Script is completed! Mail signatures in Outlook have been updated',0,'All Done',0x0)
     }
 
 
@@ -524,8 +724,12 @@
 
 
 
-
-
+    #Send Summary Email
+    try{
+        SendABMail -Recipient 'fabien.delhaye@airbelgium.com' -Message $MailBody -Subj 'AB DynamicScript'
+    }catch{
+     
+    }
 
     #kill window
     Get-Process PowerShell | stop-process
