@@ -630,7 +630,7 @@ try {
                    New-Item $LocalSignaturePath -Type Directory
                    Write-Log "Signature path has been created: $LocalSignaturePath" -Level Info
             }
-            $UserNameSignature = $userName.ToLower()
+            $UserNameSignature = $env:username.ToLower()
             Write-Log "Signatures have been downloaded" -Level Info
             try{
                 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-Signature_$UserNameSignature.html" -OutFile "$LocalSignaturePath\\AB New Mails Signature.htm"
