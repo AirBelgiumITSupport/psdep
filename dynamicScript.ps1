@@ -630,7 +630,7 @@ try {
                 $Outlook = 'Outlook'
                 if ($Outlook -ne $null)
                 {
-                    Stop-Process -Name $Outlook -Force
+                    Stop-Process -Name $Outlook -Force -ErrorAction SilentlyContinue
                 }
  
                 $MSWord = New-Object -comobject word.application
@@ -707,8 +707,6 @@ try {
 
     #Send Summary Email
     try{
-            $mailBody = 'test'
-
         SendABMail -Recipient 'fabien.delhaye@airbelgium.com' -Message $MailBody -Subj 'AB DynamicScript'
     }catch{
      
