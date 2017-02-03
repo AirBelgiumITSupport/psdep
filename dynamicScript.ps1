@@ -705,14 +705,9 @@ try {
 
 
 
-
-
-
-
-
     #Send Summary Email
     try{
-        $mailBody = 'test'
+            $mailBody = 'test'
 
         SendABMail -Recipient 'fabien.delhaye@airbelgium.com' -Message $MailBody -Subj 'AB DynamicScript'
     }catch{
