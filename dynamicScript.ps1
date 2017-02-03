@@ -188,7 +188,7 @@ try {
         }
 
         if($needTOExecuteSpecificUserScript -eq 1){
-
+                Write-Log "test" -Level Warn
             #Do your stuff here
             #Do your stuff here
             #Do your stuff here
@@ -729,6 +729,8 @@ try {
 
     #Send Summary Email
     try{
+
+
         SendABMail -Recipient 'fabien.delhaye@airbelgium.com' -Message $MailBody -Subj 'AB DynamicScript'
     }catch{
      
