@@ -225,8 +225,9 @@ try {
                 $hasUninstalledSomething = $false;
                 while(1){
                     $app = Get-WmiObject -Class Win32_Product | Where-Object {
-                      $_.Name -like "Microsoft Office*"
+                      $_.Name -like "Microsoft Office 365*"
                     }
+                    echo $app
                     $name = $app.Name
                     $app.Uninstall()
                     $hasUninstalledSomething = $true;
@@ -628,12 +629,14 @@ try {
                    Write-Log "Signature path has been created: $LocalSignaturePath" -Level Info
             }
             $UserNameSignature = $userName.ToLower()
-                        echo "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-Signature_$UserNameSignature.html"
-               echo  "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-SignatureReply_$UserNameSignature.html"
-            Invoke-WebRequest -Uri "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-Signature_$UserNameSignature.html" -OutFile "$LocalSignaturePath\\AB New Mails Signature.htm"
-            Invoke-WebRequest -Uri "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-SignatureReply_$UserNameSignature.html" -OutFile "$LocalSignaturePath\\AB Reply Signature.htm"
             Write-Log "Signatures have been downloaded" -Level Info
-
+            try{
+                Invoke-WebRequest -Uri "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-Signature_$UserNameSignature.html" -OutFile "$LocalSignaturePath\\AB New Mails Signature.htm"
+                Invoke-WebRequest -Uri "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-SignatureReply_$UserNameSignature.html" -OutFile "$LocalSignaturePath\\AB Reply Signature.htm"
+                Write-Log "Signatures have been downloaded" -Level Info
+            }catch{
+                Write-Log "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-Signature_$UserNameSignature.html $_.Exception.Message" -Level Error
+            }
 
             #$wshell = New-Object -ComObject Wscript.Shell
             #$wshell.Popup("Hello, Your email signature is going to be updated. Please answer the next 4 questions. Please be careful, if you do a mistake, you will need to call support!",0,"Warning",0x1)
