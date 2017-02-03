@@ -1,5 +1,5 @@
     #general Script Version
-    $generalScriptVersion = '1.2'
+    $generalScriptVersion = '2'
 
     #Specific Users Script Version
     $SpecificUserScriptVersion = '1.2'
@@ -77,7 +77,7 @@ function Write-Log
          # Write message to error, warning, or verbose pipeline and specify $LevelText 
         switch ($Level) { 
             'Error' { 
-                Write-Error $Message 
+                Write-Warning $Message 
                 $LevelText = 'ERROR:' 
                 $global:MailBody += "$FormattedDate $LevelText $Message <br />"
                 } 
@@ -413,92 +413,93 @@ try {
             }
         }
 
-
-        Set-ItemProperty -Path HKCU:'\Software\Microsoft\Internet Explorer\Main\' -Name 'start page' -Value 'https://airbelgium.sharepoint.com/SitePages/Accueil.aspx' -Force
-        Pin-App "Microsoft Edge" -unpin -taskbar  
-        Pin-App "Microsoft Edge" -unpin -start
-        Pin-App "Skype Preview" -unpin -start
-        Pin-App "Internet Explorer" -pin -taskbar  
-        Pin-App "Internet Explorer" -pin -start                 
-        Pin-App "Outlook 2016" -pin -start                 
-        Pin-App "OneNote 2016" -pin -start   
-        Pin-App "PowerPoint 2016" -pin -start
-        Pin-App "Word 2016" -pin -start   
-        Pin-App "Excel 2016" -pin -start                      
-        Pin-App "Skype for Business 2016" -pin -start   
-        Pin-App "Skype for Business 2016" -pin -taskbar   
-        Pin-App "Store" -unpin -start
-        Pin-App "Store" -unpin -taskbar
+        if ($scriptInstalledVersion -lt '2'){
+            Set-ItemProperty -Path HKCU:'\Software\Microsoft\Internet Explorer\Main\' -Name 'start page' -Value 'https://airbelgium.sharepoint.com/SitePages/Accueil.aspx' -Force
+            Pin-App "Microsoft Edge" -unpin -taskbar  
+            Pin-App "Microsoft Edge" -unpin -start
+            Pin-App "Skype Preview" -unpin -start
+            Pin-App "Internet Explorer" -pin -taskbar  
+            Pin-App "Internet Explorer" -pin -start                 
+            Pin-App "Outlook 2016" -pin -start                 
+            Pin-App "OneNote 2016" -pin -start   
+            Pin-App "PowerPoint 2016" -pin -start
+            Pin-App "Word 2016" -pin -start   
+            Pin-App "Excel 2016" -pin -start                      
+            Pin-App "Skype for Business 2016" -pin -start   
+            Pin-App "Skype for Business 2016" -pin -taskbar   
+            Pin-App "Store" -unpin -start
+    #        Pin-App "Store" -unpin -taskbar
         
-#        if (Test-Path 'c:\windows\system32\syspin.exe'){}
-#        else{
-#             Invoke-WebRequest -Uri 'http://airbelgium.com/emailsignature/syspin.exe' -OutFile 'c:\windows\system32\syspin.exe'
-#        }
-#        syspin “C:\Program Files\Internet Explorer\iexplore.exe” c:5386 
+    #        if (Test-Path 'c:\windows\system32\syspin.exe'){}
+    #        else{
+    #             Invoke-WebRequest -Uri 'http://airbelgium.com/emailsignature/syspin.exe' -OutFile 'c:\windows\system32\syspin.exe'
+    #        }
+    #        syspin “C:\Program Files\Internet Explorer\iexplore.exe” c:5386 
 
 
-        #Initialize key variables
-        $UserRegPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings\ZoneMap\Domains"
-        $DWord = 2
-        #Main function
-        If($SubDomain)
-        {
-            #Adding trusted sites in the registry
-            Foreach($TruestedSite in $SubDomain)
+            #Initialize key variables
+            $UserRegPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings\ZoneMap\Domains"
+            $DWord = 2
+            #Main function
+            If($SubDomain)
             {
-                #If user does not specify the user type. By default,the script will add the trusted sites for the current user.
-                    New-Item -Path $UserRegPath\$TruestedSite -Force
-                    New-Item -Path $UserRegPath\$TruestedSite\* -Force
-                    New-ItemProperty $UserRegPath\$TruestedSite\* -Name 'https' -Value 2 -PropertyType 'DWORD' -Force
-                    Write-Log "Successfully added '$TruestedSite' domain to trusted Sites in Internet Explorer." -Level Info
+                #Adding trusted sites in the registry
+                Foreach($TruestedSite in $SubDomain)
+                {
+                    #If user does not specify the user type. By default,the script will add the trusted sites for the current user.
+                        New-Item -Path $UserRegPath\$TruestedSite -Force
+                        New-Item -Path $UserRegPath\$TruestedSite\* -Force
+                        New-ItemProperty $UserRegPath\$TruestedSite\* -Name 'https' -Value 2 -PropertyType 'DWORD' -Force
+                        Write-Log "Successfully added $TruestedSite domain to trusted Sites in Internet Explorer." -Level Info
+                }
             }
-        }
         
 
 
-        #Uninstall Windows Xbox application
-        Get-AppxPackage *xboxapp* | Remove-AppxPackage
+            #Uninstall Windows Xbox application
+            Get-AppxPackage *xboxapp* | Remove-AppxPackage
 
-        <#
-            #Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\ftp\UserChoice' -name ProgId IE.FTP
-            #Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice' -name ProgId IE.HTTP
-            #Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice' -name ProgId IE.HTTPS
+            <#
+                #Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\ftp\UserChoice' -name ProgId IE.FTP
+                #Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice' -name ProgId IE.HTTP
+                #Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice' -name ProgId IE.HTTPS
 
-        #>
+            #>
 
 
 
-        <#
-        #powershell
-            $AppsList = "Microsoft.BingFinance","Microsoft.BingNews","Microsoft.BingWeather","Microsoft.XboxApp","Microsoft.MicrosoftSolitaireCollection","Microsoft.BingSports","Microsoft.ZuneMusic","Microsoft.ZuneVideo","Microsoft.Windows.Photos","Microsoft.People","Microsoft.MicrosoftOfficeHub","Microsoft.WindowsMaps","microsoft.windowscommunicationsapps","Microsoft.Getstarted","Microsoft.3DBuilder","Microsoft.Office.Sway"
+            <#
+            #powershell
+                $AppsList = "Microsoft.BingFinance","Microsoft.BingNews","Microsoft.BingWeather","Microsoft.XboxApp","Microsoft.MicrosoftSolitaireCollection","Microsoft.BingSports","Microsoft.ZuneMusic","Microsoft.ZuneVideo","Microsoft.Windows.Photos","Microsoft.People","Microsoft.MicrosoftOfficeHub","Microsoft.WindowsMaps","microsoft.windowscommunicationsapps","Microsoft.Getstarted","Microsoft.3DBuilder","Microsoft.Office.Sway"
 
-            ForEach ($App in $AppsList) 
-            { 
-                $PackageFullName = (Get-AppxPackage $App).PackageFullName
-                $ProPackageFullName = (Get-AppxProvisionedPackage -online | where {$_.Displayname -eq $App}).PackageName
-                    write-host $PackageFullName
-                    Write-Host $ProPackageFullName 
-                if ($PackageFullName) 
+                ForEach ($App in $AppsList) 
                 { 
-                    Write-Host "Removing Package: $App"
-                    remove-AppxPackage -package $PackageFullName 
-                } 
-                else 
-                { 
-                    Write-Host "Unable to find package: $App" 
-                } 
-                    if ($ProPackageFullName) 
-                { 
-                    Write-Host "Removing Provisioned Package: $ProPackageFullName"
-                    Remove-AppxProvisionedPackage -online -packagename $ProPackageFullName 
-                } 
-                else 
-                { 
-                    Write-Host "Unable to find provisioned package: $App" 
-                } 
-            }
+                    $PackageFullName = (Get-AppxPackage $App).PackageFullName
+                    $ProPackageFullName = (Get-AppxProvisionedPackage -online | where {$_.Displayname -eq $App}).PackageName
+                        write-host $PackageFullName
+                        Write-Host $ProPackageFullName 
+                    if ($PackageFullName) 
+                    { 
+                        Write-Host "Removing Package: $App"
+                        remove-AppxPackage -package $PackageFullName 
+                    } 
+                    else 
+                    { 
+                        Write-Host "Unable to find package: $App" 
+                    } 
+                        if ($ProPackageFullName) 
+                    { 
+                        Write-Host "Removing Provisioned Package: $ProPackageFullName"
+                        Remove-AppxProvisionedPackage -online -packagename $ProPackageFullName 
+                    } 
+                    else 
+                    { 
+                        Write-Host "Unable to find provisioned package: $App" 
+                    } 
+                }
 
-        #>
+            #>
+        }
 
         #Update Scheduled Task
         $TaskTrigger = New-ScheduledTaskTrigger -AtLogOn 
