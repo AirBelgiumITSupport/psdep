@@ -121,8 +121,8 @@ function SendABMail
     { 
     #Prepare send mail        
         try {
-            $logi = Get-Content $AppData\AB_automatedScript_cred_eMail
-            $pass = Get-Content $AppData\AB_automatedScript_cred | ConvertTo-SecureString
+            $logi = Get-Content $AppData\AB_automatedScript_cred_eMail  -ErrorAction stop
+            $pass = Get-Content $AppData\AB_automatedScript_cred | ConvertTo-SecureString  -ErrorAction stop
             $mycreds = new-object -typename System.Management.Automation.PSCredential ` -argumentlist $logi, $pass
             if ($Attachement -eq ''){
                 Send-MailMessage -To $Recipient -SmtpServer "smtp.office365.com" -Credential $mycreds -UseSsl $Subject -Port "587" -Body $Message -From $logi -BodyAsHtml -ErrorAction Stop
@@ -666,7 +666,7 @@ try {
                     $EmailSignature.ReplyMessageSignature="$SignatureNameReply"
                     Write-Log "Mail Reply Signature has been configured" -Level Info
                 }
-                Stop-Process -Name $Outlook
+                Stop-Process -Name $Outlook  -ErrorAction SilentlyContinue
 
             If ($ForceSignatureNew -eq '1')
             {
