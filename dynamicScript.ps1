@@ -234,30 +234,6 @@ try {
     ###############################################
     ################# END OF BLOC #################
     ###############################################
-    if ($UserName -eq 'niky.terzakis'){
-        #New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'ABScriptVersion' -Value $SpecificUserScriptVersion -PropertyType 'String' -Force 
-        If (Get-ItemProperty -Name 'SpecificUserScriptVersion' -Path HKCU:'\Software\AB\ITScript' -ErrorAction SilentlyContinue) { 
-            $SpecificUserScriptInstalledVersion = Get-ItemProperty -Name 'SpecificUserScriptVersion' -Path HKCU:'\Software\AB\ITScript'
-            $SpecificUserScriptInstalledVersion = $SpecificUserScriptInstalledVersion.SpecificUserScriptVersion.ToString()
-
-            if ($SpecificUserScriptInstalledVersion -eq $SpecificUserScriptVersion){}else{
-                $needTOExecuteSpecificUserScript = 1
-                New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'SpecificUserScriptVersion' -Value $SpecificUserScriptVersion -PropertyType 'String' -Force 
-            }
-        } 
-        Else {
-            New-Item -Path HKCU:'\Software\AB\ITScript' -Force
-		    New-ItemProperty HKCU:'\Software\AB\ITScript' -Name 'SpecificUserScriptVersion' -Value $SpecificUserScriptVersion -PropertyType 'String' -Force 
-            $needTOExecuteSpecificUserScript = 1
-        }
-
-        if($needTOExecuteSpecificUserScript -eq 1){
-
-
-
-
-        }
-    }
 
     #################################################################################################################################
     #################################################################################################################################
@@ -454,11 +430,11 @@ try {
         Pin-App "Store" -unpin -start
         Pin-App "Store" -unpin -taskbar
         
-        if (Test-Path 'c:\windows\system32\syspin.exe'){}
-        else{
-             Invoke-WebRequest -Uri 'http://airbelgium.com/emailsignature/syspin.exe' -OutFile 'c:\windows\system32\syspin.exe'
-        }
-        syspin “C:\Program Files\Internet Explorer\iexplore.exe” c:5386 
+#        if (Test-Path 'c:\windows\system32\syspin.exe'){}
+#        else{
+#             Invoke-WebRequest -Uri 'http://airbelgium.com/emailsignature/syspin.exe' -OutFile 'c:\windows\system32\syspin.exe'
+#        }
+#        syspin “C:\Program Files\Internet Explorer\iexplore.exe” c:5386 
 
 
         #Initialize key variables
@@ -538,12 +514,18 @@ try {
         $STPrincipal = New-ScheduledTaskPrincipal -UserId $UserName  -RunLevel "Highest"
         #Register the new scheduled task
         $Task = New-ScheduledTask -Action $TaskAction1 -Principal $TaskUserName -Trigger $TaskTrigger -Settings $TaskSettings 
-        Register-ScheduledTask $STName -InputObject $task -Force
+        try{
+            Register-ScheduledTask $STName -InputObject $task -Force -ErrorAction SilentlyContinue
+
         $Task = Get-ScheduledTask -TaskName $STName
         #$Task.Triggers.Repetition.Duration = "P1D"
         #$Task.Triggers.Repetition.Interval = "PT120M"
         $Task | Set-ScheduledTask -User $UserName
+
         Write-Log "Air Belgium Powershell Deployment task has been updated" -Level Info
+        }catch{
+             Write-Log -Message $_.Exception.Message -Level Error
+        }
 
 	 }
 
