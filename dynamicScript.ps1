@@ -711,6 +711,6 @@ try {
     }catch{
      
     }
-
+    Write-Log -Message "End of the script"
     #kill window
     Get-Process PowerShell -ErrorAction SilentlyContinue | stop-process 
