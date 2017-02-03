@@ -24,12 +24,11 @@
     $RemoteSignaturePathFull = $SigSource
     $UserName = $env:username
     $computer = gc env:computername
-    $MailBody = ''
+    $global:MailBody = ''
 
 
     #Disable output
     Set-PSDebug -Off
-
 
 function Write-Log 
 { 
@@ -80,12 +79,12 @@ function Write-Log
             'Error' { 
                 Write-Error $Message 
                 $LevelText = 'ERROR:' 
-                $MailBody += "$FormattedDate $LevelText $Message <br />"
+                $global:MailBody += "$FormattedDate $LevelText $Message <br />"
                 } 
             'Warn' { 
                 Write-Warning $Message 
                 $LevelText = 'WARNING:'
-                $MailBody += "$FormattedDate $LevelText $Message <br />"
+                $global:MailBody += "$FormattedDate $LevelText $Message <br />"
                 }
             'Info' { 
                 Write-Verbose $Message 
@@ -137,6 +136,7 @@ function SendABMail
             }else{
                 Send-MailMessage -To $Recipient -Attachments $Attachement -SmtpServer "smtp.office365.com" -Credential $mycreds -UseSsl $Subject -Port "587" -Body $Message -From $cred.Username -BodyAsHtml         }       
         }
+        Write-Log -Message "A mail has been sent" -Level Warn
 
     }  
     End {     } 
