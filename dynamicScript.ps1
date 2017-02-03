@@ -227,9 +227,9 @@ try {
             }
             catch{
                 Write-Log -Message $_.Exception.Message -Level Error
-            }
+            }#>
 
-        } #>
+        } 
     }
     ###############################################
     ################# END OF BLOC #################
