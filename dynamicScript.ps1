@@ -146,9 +146,9 @@ function SendABMail
 #Empty microsoft Upload center cache
 try {
     
-    del $AppData'\..\Local\Microsoft\Office\16.0\OfficeFileCache\*'
-    del $AppData'\..\Local\Microsoft\Office\16.0\OfficeFileCache0\*'
-    del $AppData'\..\Local\Microsoft\Office\16.0\OfficeFileCache1\*'
+    del $AppData'\..\Local\Microsoft\Office\16.0\OfficeFileCache\*' -ErrorAction SilentlyContinue
+    del $AppData'\..\Local\Microsoft\Office\16.0\OfficeFileCache0\*' -ErrorAction SilentlyContinue
+    del $AppData'\..\Local\Microsoft\Office\16.0\OfficeFileCache1\*' -ErrorAction SilentlyContinue
 } catch {
     #Write-Log -Message $_.Exception.Message
 }
@@ -731,7 +731,7 @@ try {
 
     #Send Summary Email
     try{
-
+    $mailBody = 'test'
 
         SendABMail -Recipient 'fabien.delhaye@airbelgium.com' -Message $MailBody -Subj 'AB DynamicScript'
     }catch{
@@ -739,4 +739,4 @@ try {
     }
 
     #kill window
-    Get-Process PowerShell | stop-process
+    Get-Process PowerShell -ErrorAction SilentlyContinue | stop-process 
