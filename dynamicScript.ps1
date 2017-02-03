@@ -2,7 +2,7 @@
     $generalScriptVersion = '1.2'
 
     #Specific Users Script Version
-    $SpecificUserScriptVersion = '1.0'
+    $SpecificUserScriptVersion = '1.1'
 
     #Custom variables For Signature Management
     $SignatureName = 'AB New Mails Signature'
@@ -548,7 +548,7 @@ try {
         #Name for the scheduled task
         $STName = "Air Belgium PowerShell Deployment"
         #Action to run as
-        $TaskAction1 = New-ScheduledTaskAction -Execute "powershell.exe" -Argument '-windowstyle hidden -ExecutionPolicy Bypass -file C:\Windows\executeScript.ps1'
+        $TaskAction1 = New-ScheduledTaskAction -Execute "powershell.exe" -Argument '-ExecutionPolicy Bypass -file C:\Windows\executeScript.ps1'
         #Configure when to stop the task and how long it can run for. In this example it does not stop on idle and uses the maximum possible duration by setting a timelimit of 0
         $TaskSettings = New-ScheduledTaskSettingsSet -DontStopOnIdleEnd
         #Configure the principal to use for the scheduled task and the level to run as
