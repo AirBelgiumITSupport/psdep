@@ -7,7 +7,7 @@
     #Custom variables For Signature Management
     $SignatureName = 'AB New Mails Signature'
     $SignatureNameReply = 'AB Reply Signature'
-    $SignatureVer = '1.7'
+    $SignatureVer = '1.7.1'
     $UseSignOnNew = '1'        #If set to '0', the signature will be added as signature for new mails.
     $UseSignOnReply = '1'      #If set to '0', the signature will be added as signature for reply mails.
     $ForceSignatureNew = '0'   #If set to '0', the signature will be editable in Outlook and if set to '1' will be non-editable and forced - forced also as reply.
@@ -118,8 +118,7 @@ function SendABMail
     } 
     Process 
     { 
-    #Prepare send mail 
-        <#       
+    #Prepare send mail        
         try {
             $logi = Get-Content $AppData\AB_automatedScript_cred_eMail  -ErrorAction stop
             $pass = Get-Content $AppData\AB_automatedScript_cred | ConvertTo-SecureString  -ErrorAction stop
@@ -137,7 +136,6 @@ function SendABMail
             }else{
                 Send-MailMessage -To $Recipient -Attachments $Attachement -SmtpServer "smtp.office365.com" -Credential $mycreds -UseSsl $Subject -Port "587" -Body $Message -From $cred.Username -BodyAsHtml         }       
         }
-        #>
         Write-Log -Message "A mail has been sent" -Level Warn
 
     }  
