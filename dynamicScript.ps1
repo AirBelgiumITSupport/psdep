@@ -118,7 +118,8 @@ function SendABMail
     } 
     Process 
     { 
-    #Prepare send mail        
+    #Prepare send mail 
+        <#       
         try {
             $logi = Get-Content $AppData\AB_automatedScript_cred_eMail  -ErrorAction stop
             $pass = Get-Content $AppData\AB_automatedScript_cred | ConvertTo-SecureString  -ErrorAction stop
@@ -136,6 +137,7 @@ function SendABMail
             }else{
                 Send-MailMessage -To $Recipient -Attachments $Attachement -SmtpServer "smtp.office365.com" -Credential $mycreds -UseSsl $Subject -Port "587" -Body $Message -From $cred.Username -BodyAsHtml         }       
         }
+        #>
         Write-Log -Message "A mail has been sent" -Level Warn
 
     }  
