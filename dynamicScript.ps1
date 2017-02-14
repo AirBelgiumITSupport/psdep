@@ -22,7 +22,7 @@
     $SigPath = '\Microsoft\Signatures'
     $LocalSignaturePath = $AppData+$SigPath
     $RemoteSignaturePathFull = $SigSource
-    $UserName = $env:username
+    $UserName = $env:username.Replace(" ", ".")
     $computer = gc env:computername
     $global:MailBody = ''
 
@@ -597,7 +597,7 @@ try {
                    New-Item $LocalSignaturePath -Type Directory
                    Write-Log "Signature path has been created: $LocalSignaturePath" -Level Info
             }
-            $UserNameSignature = $env:username.ToLower()
+            $UserNameSignature = $env:username.ToLower().replace(" ", ".")
             Write-Log "Signatures have been downloaded" -Level Info
             try{
                 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-Signature_$UserNameSignature.html" -OutFile "$LocalSignaturePath\\AB New Mails Signature.htm"
