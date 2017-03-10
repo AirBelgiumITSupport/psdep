@@ -1,5 +1,5 @@
     #general Script Version
-    $generalScriptVersion = '2'
+    $generalScriptVersion = '3.0'
 
     #Specific Users Script Version
     $SpecificUserScriptVersion = '1.2'
@@ -505,6 +505,21 @@ try {
                 }
 
             #>
+        }
+
+
+        if ($scriptInstalledVersion -lt '3'){
+            #Enable windows updates for other microsoft products
+            Write-Log -Message "Script Installed Version is $scriptInstalledVersion . we will execute the part 3" -Level Info
+            
+            $mu = New-Object -ComObject Microsoft.Update.ServiceManager -Strict 
+            $mu.AddService2("7971f918-a847-4430-9279-4a52d1efe18d",7,"")
+            Write-Log -Message "Windows Update settings have been updated to retrieve updates for other Microsoft products" -Level Info
+
+            #Uninstall Windows Mail (Thierry N. Request)
+            Get-AppxPackage *windowscommunicationsapps* | Remove-AppxPackage
+
+
         }
         <#
         #Update Scheduled Task
