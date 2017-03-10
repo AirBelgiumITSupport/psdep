@@ -24,7 +24,7 @@
     $RemoteSignaturePathFull = $SigSource
     if ($env:username.Contains("dirk")){
         $UserName = $env:username.Replace(" ", ".")
-    else{
+    }else{
         $UserName = $env:username.Replace(" ", "")
     }
     $computer = gc env:computername
