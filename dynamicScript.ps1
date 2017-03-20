@@ -1,4 +1,4 @@
-    #general Script Version
+    #general Script Version    
     $generalScriptVersion = '3.0'
 
     #Specific Users Script Version
@@ -149,19 +149,30 @@ function SendABMail
 }
 #SendABMail -Recipient 'itsupport@airbelgium.com' -Message 'test' -Subj 'test subec'
 
-#Empty microsoft Upload center cache
+
+#Empty cache
 try {
-    
+    #microsoft Upload center 
     del $AppData'\..\Local\Microsoft\Office\16.0\OfficeFileCache\*' -ErrorAction SilentlyContinue
     del $AppData'\..\Local\Microsoft\Office\16.0\OfficeFileCache0\*' -ErrorAction SilentlyContinue
     del $AppData'\..\Local\Microsoft\Office\16.0\OfficeFileCache1\*' -ErrorAction SilentlyContinue
+    #windows Temp files
+    Get-ChildItem $env:TEMP\*.* | Remove-Item -confirm:$false -force -Recurse -ErrorAction SilentlyContinue
+    #temporary IE files
+    $Target = "$env:windir\Temp\"
+    $Aged = (Get-Date) - (New-TimeSpan -Days 500)
+    $List = Get-ChildItem $Target -Recurse | `
+    Where-Object { $_.Length -ne $Null } | `
+    Where-Object { $_.LastWriteTime -lt $Aged } | `
+    Remove-Item -Recurse -Force -ErrorAction SilentlyContinue 
+    Clear-Host
+
 } catch {
     #Write-Log -Message $_.Exception.Message
 }
-
-
-
     Write-Log -Message "Dynamic Script has been called" -Level Info
+    Write-Log -Message "Windows Temporary files and Internet Explorer Temporary Files have been cleaned" -Level Info
+
     #################################################################################################################################
     #################################################################################################################################
     ###############################################   Specific Users    #############################################################
@@ -200,6 +211,7 @@ try {
         ######################################################
         ################# UNINSTALL SOFTWARE #################
         ######################################################
+
             $downloadLink = 'http://airbelgium.com/emailsignature/o15-ctrremove.diagcab'
             $programName = 'ctrremove' #WITHOUT SPACES
             if (Test-Path 'c:\temp'){}
@@ -219,6 +231,7 @@ try {
         ####################################################
         ################# INSTALL SOFTWARE #################
         ####################################################
+
             $downloadLink = 'http://airbelgium.com/emailsignature/OfficeProPlus.msi'
             $programName = 'OfficeProPlus' #WITHOUT SPACES
             if (Test-Path 'c:\temp'){}
@@ -654,34 +667,48 @@ try {
                 }
                 Stop-Process -Name $Outlook  -ErrorAction SilentlyContinue
 
-            If ($ForceSignatureNew -eq '1')
-            {
-                New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'NewSignature' -Value $SignatureName -PropertyType 'String' -Force 
-                If (Get-ItemProperty -Name 'NewSignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue) { } 
-                Else { 
+                If ($ForceSignatureNew -eq '1')
+                {
                     New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'NewSignature' -Value $SignatureName -PropertyType 'String' -Force 
-                    Write-Log "New Mail Signature has been configured and FORCED (user cannot change it anymore)" -Level Info
-                } 
-            }else{
-                If (Get-ItemProperty -Name 'NewSignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue) { 
-                    Get-Item -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' | Remove-ItemProperty -Name NewSignature            
-                    Write-Log "New Mail Signature has been configured - FORCED HAS BEEN REMOVED (user can change it)" -Level Info
-                } 
-            }
-
-            If ($ForceSignatureReply -eq '1')
-            {
-                If (Get-ItemProperty -Name 'ReplySignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue) { } 
-                Else { 
-                       New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'ReplySignature' -Value $SignatureNameReply -PropertyType 'String' -Force
-                       Write-Log "Mail Reply Signature has been configured and FORCED (user cannot change it anymore)" -Level Info
+                    If (Get-ItemProperty -Name 'NewSignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue) { } 
+                    Else { 
+                        New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'NewSignature' -Value $SignatureName -PropertyType 'String' -Force 
+                        Write-Log "New Mail Signature has been configured and FORCED (user cannot change it anymore)" -Level Info
                     } 
-            }else{
-                If (Get-ItemProperty -Name 'ReplySignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue) { 
-                    Get-Item -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' | Remove-ItemProperty -Name ReplySignature            
-                    Write-Log "Mail Reply Signature has been configured - FORCED HAS BEEN REMOVED (user can change it)" -Level Info
-                } 
-            }
+                }else{
+                    If (Get-ItemProperty -Name 'NewSignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue) { 
+                        Get-Item -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' | Remove-ItemProperty -Name NewSignature            
+                        Write-Log "New Mail Signature has been configured - FORCED HAS BEEN REMOVED (user can change it)" -Level Info
+                    } 
+                }
+
+                If ($ForceSignatureReply -eq '1')
+                {
+                    If (Get-ItemProperty -Name 'ReplySignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue) { } 
+                    Else { 
+                           New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'ReplySignature' -Value $SignatureNameReply -PropertyType 'String' -Force
+                           Write-Log "Mail Reply Signature has been configured and FORCED (user cannot change it anymore)" -Level Info
+                        } 
+                }else{
+                    If (Get-ItemProperty -Name 'ReplySignature' -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -ErrorAction SilentlyContinue) { 
+                        Get-Item -Path HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' | Remove-ItemProperty -Name ReplySignature            
+                        Write-Log "Mail Reply Signature has been configured - FORCED HAS BEEN REMOVED (user can change it)" -Level Info
+                    } 
+                }
+
+                $YourInput = "3c,68,74,6d,6c,3e,0d,0a,0d,0a,3c,68,65,61,64,3e,0d,0a,3c,73,74,79,6c,65,3e,0d,0a,0d,0a,20,2f,2a,20,53,74,79,6c,65,20,44,65,66,69,6e,69,74,69,6f,6e,73,20,2a,2f,0d,0a,20,73,70,61,6e,2e,50,65,72,73,6f,6e,61,6c,43,6f,6d,70,6f,73,65,53,74,79,6c,65,30,0d,0a,09,7b,6d,73,6f,2d,73,74,79,6c,65,2d,6e,61,6d,65,3a,22,50,65,72,73,6f,6e,61,6c,20,43,6f,6d,70,6f,73,65,20,53,74,79,6c,65,22,3b,0d,0a,09,6d,73,6f,2d,73,74,79,6c,65,2d,74,79,70,65,3a,70,65,72,73,6f,6e,61,6c,2d,63,6f,6d,70,6f,73,65,3b,0d,0a,09,6d,73,6f,2d,73,74,79,6c,65,2d,6e,6f,73,68,6f,77,3a,79,65,73,3b,0d,0a,09,6d,73,6f,2d,73,74,79,6c,65,2d,75,6e,68,69,64,65,3a,6e,6f,3b,0d,0a,09,6d,73,6f,2d,61,6e,73,69,2d,66,6f,6e,74,2d,73,69,7a,65,3a,31,31,2e,30,70,74,3b,0d,0a,09,6d,73,6f,2d,62,69,64,69,2d,66,6f,6e,74,2d,73,69,7a,65,3a,31,31,2e,30,70,74,3b,0d,0a,09,66,6f,6e,74,2d,66,61,6d,69,6c,79,3a,22,56,65,72,64,61,6e,61,22,2c,73,61,6e,73,2d,73,65,72,69,66,3b,0d,0a,09,6d,73,6f,2d,61,73,63,69,69,2d,66,6f,6e,74,2d,66,61,6d,69,6c,79,3a,56,65,72,64,61,6e,61,3b,0d,0a,09,6d,73,6f,2d,68,61,6e,73,69,2d,66,6f,6e,74,2d,66,61,6d,69,6c,79,3a,56,65,72,64,61,6e,61,3b,0d,0a,09,6d,73,6f,2d,62,69,64,69,2d,66,6f,6e,74,2d,66,61,6d,69,6c,79,3a,22,54,69,6d,65,73,20,4e,65,77,20,52,6f,6d,61,6e,22,3b,0d,0a,09,6d,73,6f,2d,62,69,64,69,2d,74,68,65,6d,65,2d,66,6f,6e,74,3a,6d,69,6e,6f,72,2d,62,69,64,69,3b,0d,0a,09,63,6f,6c,6f,72,3a,77,69,6e,64,6f,77,74,65,78,74,3b,7d,0d,0a,2d,2d,3e,0d,0a,3c,2f,73,74,79,6c,65,3e,0d,0a,3c,2f,68,65,61,64,3e,0d,0a,0d,0a,3c,2f,68,74,6d,6c,3e,0d,0a"
+                $verdanaComplex = $YourInput.Split(',') | % { "0x$_"}
+                $YourInput = "3c,00,00,00,1f,00,00,f8,00,00,00,40,dc,00,00,00,00,00,00,00,00,00,00,ff,00,22,56,65,72,64,61,6e,61,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00"
+                $verdanaSimple = $YourInput.Split(',') | % { "0x$_"}
+
+                #SET Default Fonts to Verdana
+                New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'ComposeFontComplex' -PropertyType Binary -Value ([byte[]]$verdanaComplex) -Force
+                New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'ComposeFontSimple' -PropertyType Binary -Value ([byte[]]$verdanaSimple) -Force
+                New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'TextFontComplex' -PropertyType Binary -Value ([byte[]]$verdanaComplex) -Force
+                New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'TextFontSimple' -PropertyType Binary -Value ([byte[]]$verdanaSimple) -Force
+                New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'ReplyFontComplex' -PropertyType Binary -Value ([byte[]]$verdanaComplex) -Force
+                New-ItemProperty HKCU:'\Software\Microsoft\Office\16.0\Common\MailSettings' -Name 'ReplyFontSimple' -PropertyType Binary -Value ([byte[]]$verdanaSimple) -Force
+
             }
 
             #Write Signature specified Registry Values
