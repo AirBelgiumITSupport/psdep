@@ -7,7 +7,7 @@
     #Custom variables For Signature Management
     $SignatureName = 'AB New Mails Signature'
     $SignatureNameReply = 'AB Reply Signature'
-    $SignatureVer = '2.2'
+    $SignatureVer = '3.0'
     $UseSignOnNew = '1'        #If set to '0', the signature will be added as signature for new mails.
     $UseSignOnReply = '1'      #If set to '0', the signature will be added as signature for reply mails.
     $ForceSignatureNew = '0'   #If set to '0', the signature will be editable in Outlook and if set to '1' will be non-editable and forced - forced also as reply.
