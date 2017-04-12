@@ -6,8 +6,8 @@
 
     #Custom variables For Signature Management
     $SignatureName = 'AB New Mails Signature'
-    $SignatureNameReply = 'AB Reply Signature'
-    $SignatureVer = '3.5'
+    $SignatureNameReply = 'AB New Mails Signature'
+    $SignatureVer = '3.6'
     $UseSignOnNew = '1'        #If set to '0', the signature will be added as signature for new mails.
     $UseSignOnReply = '1'      #If set to '0', the signature will be added as signature for reply mails.
     $ForceSignatureNew = '0'   #If set to '0', the signature will be editable in Outlook and if set to '1' will be non-editable and forced - forced also as reply.
@@ -633,7 +633,7 @@ try {
             Write-Log "Signatures have been downloaded" -Level Info
             try{
                 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-Signature_$UserNameSignature.html" -OutFile "$LocalSignaturePath\\AB New Mails Signature.htm"
-                Invoke-WebRequest -Uri "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-SignatureReply_$UserNameSignature.html" -OutFile "$LocalSignaturePath\\AB Reply Signature.htm"
+                Invoke-WebRequest -Uri "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-Signature_$UserNameSignature.html" -OutFile "$LocalSignaturePath\\AB Reply Signature.htm"
                 Write-Log "Signatures have been downloaded" -Level Info
             }catch{
                 Write-Log "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-Signature_$UserNameSignature.html $_.Exception.Message" -Level Error
