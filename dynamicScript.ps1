@@ -633,6 +633,9 @@ try {
                    Write-Log "Signature path has been created: $LocalSignaturePath" -Level Info
             }
             $UserNameSignature = $env:username.ToLower().replace(" ", ".").replace("é", "e").replace("è", "e").replace("ê", "e").replace("ï", "i")
+            	if($UserNameSignature = "christophe.deschuyte"){
+		$UserNameSignature = "christophe.deschuyteneer"
+	}
             Write-Log "Signatures have been downloaded" -Level Info
             try{
                 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-Signature_$UserNameSignature.html" -OutFile "$LocalSignaturePath\\AB New Mails Signature.htm"
