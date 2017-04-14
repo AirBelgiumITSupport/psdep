@@ -27,8 +27,8 @@
     }else{
         $UserName = $env:username.Replace(" ", "")
     }
-	if($UserName = "christophe.deschuyte@airbelgium.com"){
-		$UserName = "christophe.deschuyteneer@airbelgium.com"
+	if($UserName = "christophe.deschuyte"){
+		$UserName = "christophe.deschuyteneer"
 	}
     $computer = gc env:computername
     $global:MailBody = ''
