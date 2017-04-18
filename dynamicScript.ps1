@@ -7,7 +7,7 @@
     #Custom variables For Signature Management
     $SignatureName = 'AB New Mails Signature'
     $SignatureNameReply = 'AB New Mails Signature'
-    $SignatureVer = '3.6'
+    $SignatureVer = '3.7'
     $UseSignOnNew = '1'        #If set to '0', the signature will be added as signature for new mails.
     $UseSignOnReply = '1'      #If set to '0', the signature will be added as signature for reply mails.
     $ForceSignatureNew = '0'   #If set to '0', the signature will be editable in Outlook and if set to '1' will be non-editable and forced - forced also as reply.
@@ -633,9 +633,9 @@ try {
                    Write-Log "Signature path has been created: $LocalSignaturePath" -Level Info
             }
             $UserNameSignature = $env:username.ToLower().replace(" ", ".").replace("é", "e").replace("è", "e").replace("ê", "e").replace("ï", "i")
-            	if($UserNameSignature = "christophe.deschuyte"){
-		$UserNameSignature = "christophe.deschuyteneer"
-	}
+               	if($UserNameSignature -eq "christophe.deschuyte"){
+	            	$UserNameSignature = "christophe.deschuyteneer"
+	            }
             Write-Log "Signatures have been downloaded" -Level Info
             try{
                 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/AirBelgiumITSupport/psdep/master/signatures/AB-Signature_$UserNameSignature.html" -OutFile "$LocalSignaturePath\\AB New Mails Signature.htm"
